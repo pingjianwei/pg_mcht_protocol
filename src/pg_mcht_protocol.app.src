@@ -1,15 +1,21 @@
 {application, pg_mcht_protocol,
- [{description, "An OTP library"},
-  {vsn, "0.1.0"},
-  {registered, []},
-  {applications,
-   [kernel,
-    stdlib
-   ]},
-  {env,[]},
-  {modules, []},
+  [{description, "An OTP library"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {applications,
+      [kernel,
+        stdlib
+      ]},
+    {included_applications,
+      [
+        pg_model
+        , pg_protocol
 
-  {maintainers, []},
-  {licenses, ["Apache 2.0"]},
-  {links, []}
- ]}.
+      ]},
+    {env, []},
+    {modules, []},
+
+    {maintainers, []},
+    {licenses, ["Apache 2.0"]},
+    {links, []}
+  ]}.
