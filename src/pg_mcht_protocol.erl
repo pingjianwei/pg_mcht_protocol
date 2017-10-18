@@ -1,4 +1,5 @@
 -module(pg_mcht_protocol).
+-include_lib("eunit/include/eunit.hrl").
 -behavior(pg_model).
 -behavior(pg_protocol).
 
@@ -22,7 +23,9 @@
 %% own apis
 -export([
   get/3
-%%  , pr/1
+  , verify/2
+  , sign_string/2
+  , sign/2
 
 ]).
 %%====================================================================
@@ -68,6 +71,9 @@ in_2_out_map() ->
 
   }.
 %%------------------------------------------------------
+-spec get(M :: atom(), Model :: pg_model:pg_model(), Field :: atom())
+      -> Value :: any().
+
 get(M, Model, mcht_index_key) when is_atom(M), is_tuple(Model) ->
   {
     pg_model:get(M, Model, mcht_id)
@@ -77,8 +83,91 @@ get(M, Model, mcht_index_key) when is_atom(M), is_tuple(Model) ->
 get(M, Model, Field) when is_atom(Field), is_atom(M), is_tuple(Model) ->
   pg_model:get(M, Model, Field).
 %%------------------------------------------------------
+-spec verify(M, Protocol) -> PassOrNot when
+  M :: atom(),
+  Protocol :: pg_model:pg_model(),
+  PassOrNot :: ok | fail.
+
+verify(M, P) when is_atom(M), is_tuple(P) ->
+  SignFields = M:sign_fields(),
+  do_verify_msg(M, P, SignFields).
+
+
+%%------------------------------------------------------
+-spec sign_string(M, P) -> SignString when
+  M :: atom(),
+  P :: pg_model:pg_model(),
+  SignString :: binary()| iolist().
+
+sign_string(M, P) when is_atom(M), is_tuple(P) ->
+  SignFields = M:sign_fields(),
+  VL = [sign_value(pg_model:get(M, P, Field)) || Field <- SignFields],
+  list_to_binary(VL).
+
+sign_value(undefined) ->
+  <<>>;
+sign_value(Value) when is_integer(Value) ->
+  integer_to_binary(Value);
+sign_value(Value) when is_binary(Value) ->
+  Value.
+
+
+%%------------------------------------------------------------
+-spec sign(M, P) -> Sig when
+  M :: atom(),
+  P :: pg_model:pg_model(),
+  Sig :: binary() | iolist().
+
+sign(M, P) when is_atom(M), is_tuple(P) ->
+  SignString = sign_string(M, P),
+  MchtId = binary_to_integer(pg_model:get(M, P, mcht_id)),
+
+  Direction = direction(M),
+
+  Sig = pg_mcht_enc:sign_hex(MchtId, Direction, SignString),
+  lager:debug("SignString = ~ts,Sig = ~ts", [SignString, Sig]),
+  {SignString, Sig}.
 
 
 %%====================================================================
 %% Internal functions
 %%====================================================================
+do_verify_msg(M, P, SignFields) when is_atom(M), is_tuple(P), is_list(SignFields) ->
+  SignString = sign_string(M, P),
+  Signature = pg_model:get(M, P, signature),
+
+  Direction = direction(M),
+
+  case pg_mcht_enc:verify_hex(
+    binary_to_integer(pg_model:get(M, P, mcht_id))
+    , Direction, SignString, Signature) of
+    true -> ok;
+    false ->
+      % verify fail
+      lager:error("sig verify failed. SignString = ~ts,"
+      "Sig=~ts,txnDate = ~ts,txnSeq=~ts",
+        [SignString, Signature, pg_model:get(M, P, mcht_txn_date),
+          pg_model:get(M, P, mcht_txn_seq)]),
+      fail
+  end.
+
+direction(M) when is_atom(M) ->
+  Options = M:options(),
+  Direction = do_direction(Options),
+  Direction.
+
+
+
+do_direction(#{direction := Direction})
+  when (Direction =:= req) or (Direction =:= resp) ->
+  Direction.
+
+direction_test() ->
+  ?assertEqual(req, do_direction(#{direction=>req, a=>b})),
+  ?assertEqual(req, do_direction(#{direction=>req})),
+  ?assertEqual(resp, do_direction(#{direction=>resp, a=>b})),
+  ?assertEqual(resp, do_direction(#{direction=>resp})),
+
+
+  ?assertEqual(req, direction(pg_mcht_protocol_t_protocol_mcht_req_pay)),
+  ok.
