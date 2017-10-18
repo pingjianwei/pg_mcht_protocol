@@ -9,6 +9,7 @@
 -module(pg_mcht_protocol_t_protocol_mcht_req_pay).
 -author("simon").
 -include_lib("eunit/include/eunit.hrl").
+-include_lib("mixer/include/mixer.hrl").
 -behaviour(pg_model).
 -behaviour(pg_protocol).
 -behaviour(pg_mcht_protocol).
@@ -16,13 +17,18 @@
 -compile(export_all).
 %% API
 %% callbacks of pg_model
--export([
+%%-export([
+%%  pr_formatter/1
+%%]).
+-mixin([{pg_mcht_protocol, [
   pr_formatter/1
-]).
+  , in_2_out_map/0
+]}]).
+
 %% callbacks of pg_protocol
--export([
-  in_2_out_map/0
-]).
+%%-export([
+%%  in_2_out_map/0
+%%]).
 %% callbacks of pg_mcht_protocol
 -export([
   sign_fields/0
@@ -50,11 +56,11 @@
 -export_records([?TXN]).
 
 %%-------------------------------------------------------------------
-pr_formatter(Field) ->
-  pg_mcht_protocol:pr_formatter(Field).
+%%pr_formatter(Field) ->
+%%  pg_mcht_protocol:pr_formatter(Field).
 
-in_2_out_map() ->
-  pg_mcht_protocol:in_2_out_map().
+%%in_2_out_map() ->
+%%  pg_mcht_protocol:in_2_out_map().
 
 sign_fields() ->
   [
