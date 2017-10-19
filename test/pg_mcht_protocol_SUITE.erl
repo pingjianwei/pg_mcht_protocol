@@ -14,6 +14,7 @@
 -export([]).
 
 -define(M_Protocol, pg_mcht_protocol_t_protocol_mcht_req_pay).
+-define(M_Repo, pg_mcht_protocol_t_repo_mcht_txn_log_pt).
 
 -compile(export_all).
 
@@ -21,7 +22,13 @@ setup() ->
   lager:start(),
   pg_mcht_enc:start(),
 
+  pg_test_utils:setup(mnesia),
+
+  pg_repo:drop(?M_Repo),
+  pg_repo:init(?M_Repo),
+
   ok.
+
 
 my_test_() ->
   {
@@ -134,5 +141,18 @@ sign_test_1() ->
 
   ?assertEqual(SigExpected, Sig),
 
+  ok.
+
+%%-----------------------------------------------------------
+save_test_1() ->
+  M = ?M_Protocol,
+  P = protocol(),
+
+  pg_mcht_protocol:save(?M_Protocol, P),
+
+  [Repo] = pg_repo:read(?M_Repo, pk()),
+
+  ?assertEqual([pay, waiting, 100],
+    pg_model:get(?M_Repo, Repo, [txn_type, txn_status, mcht_txn_amt])),
   ok.
 

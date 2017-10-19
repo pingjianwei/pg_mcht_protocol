@@ -7,6 +7,7 @@
 -callback sign_fields() -> list().
 -callback options() -> map().
 -callback validate() -> boolean().
+-callback save(M :: atom(), Protocol :: pg_model:pg_model()) -> ok|fail.
 
 %% API exports
 %% callbacks of pg_protocol
@@ -272,6 +273,25 @@ validate_format_one_test() ->
 
   ok.
 
+
+%%------------------------------------------------------
+-spec save(M, Protocol) -> Result when
+  M :: atom(),
+  Protocol :: pg_model:pg_model(),
+  Result :: ok |fail.
+
+save(M, Protocol) when is_atom(M), is_tuple(Protocol) ->
+  Options = M:options(),
+  TxnStatus = maps:get(txn_type, Options),
+
+  case maps:get(direction, Options) of
+    req ->
+      waiting;
+    resp ->
+      get
+  end,
+
+  ok.
 %%====================================================================
 %% Internal functions
 %%====================================================================
