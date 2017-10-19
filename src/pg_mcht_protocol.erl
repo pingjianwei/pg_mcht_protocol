@@ -26,8 +26,17 @@
   , verify/2
   , sign_string/2
   , sign/2
+  , validate_format/1
 
 ]).
+
+-type validate_result() :: ok | fail.
+-type resp_cd() :: binary().
+-type resp_msg() :: binary().
+
+-define(TxnAmtMin, 50).
+-define(BankCardNoLenMin, 15).
+-define(BankCardNoLenMax, 21).
 %%====================================================================
 %% API functions
 %%====================================================================
@@ -128,6 +137,140 @@ sign(M, P) when is_atom(M), is_tuple(P) ->
   lager:debug("SignString = ~ts,Sig = ~ts", [SignString, Sig]),
   {SignString, Sig}.
 
+%%------------------------------------------------------
+-spec validate_format(VL) -> Result when
+  VL :: proplists:proplist(),
+  Result :: {validate_result, validate_result(), resp_cd(), resp_msg()}.
+
+validate_format(Params) when is_list(Params) ->
+  F = fun({Key, Value}, {ok, _, _} = _AccIn) when is_binary(Key) ->
+    try
+      validate_format_one_field(Key, Value),
+      {ok, <<>>, <<>>}
+    catch
+      _:_ ->
+        ErrorMsg = <<Key/binary, "=[", Value/binary, "]格式错误"/utf8>>,
+        lager:error("Post vals error = ~ts", [ErrorMsg]),
+        {fail, <<"99">>, ErrorMsg}
+    end;
+
+    (_, {fail, _, _} = AccIn) ->
+      %% previous post kv already validate fail, just pass it throuth
+      AccIn
+      end,
+
+  {OkOrFail, RespCd, RespMsg} = lists:foldl(F, {ok, <<>>, <<>>}, Params),
+  {OkOrFail, RespCd, RespMsg}.
+
+validate_format_test() ->
+  PostVals = pg_mcht_protocol_SUITE:qs(),
+  ?assertEqual({ok, <<>>, <<>>}, validate_format(PostVals)),
+  ok.
+
+%% for mcht req
+validate_format_one_field(<<"merchId">>, Value) when is_binary(Value) ->
+  ok = validate_string(integer, Value);
+validate_format_one_field(<<"tranTime">>, Value) when is_binary(Value) ->
+  6 = byte_size(Value),
+  ok = validate_string(integer, Value);
+%%validate_format_one(mcht, <<"origTranDate">>, <<>>) ->
+%%  %% can be empty?
+%%  ok;
+validate_format_one_field(<<"origTranDate">>, Value) when is_binary(Value) ->
+  ok = validate_string(date_yyyymmdd, Value);
+validate_format_one_field(<<"tranDate">>, Value) when is_binary(Value) ->
+  ok = validate_string(date_yyyymmdd, Value);
+validate_format_one_field(<<"queryId">>, Value) when is_binary(Value) ->
+  ok;
+validate_format_one_field(<<"trustBackUrl">>, Value) when is_binary(Value) ->
+  <<"http", _/binary>> = Value,
+  ok;
+validate_format_one_field(<<"trustFrontUrl">>, Value) when is_binary(Value) ->
+  <<"http", _/binary>> = Value,
+  ok;
+validate_format_one_field(<<"tranAmt">>, Value) when is_binary(Value) ->
+  ok = validate_string(txn_amt, Value);
+validate_format_one_field(<<"bankCardNo">>, <<>>) ->
+  %% can be empty
+  ok;
+validate_format_one_field(<<"bankCardNo">>, Value) when is_binary(Value) ->
+  ok = validate_string(bank_card_no, Value);
+validate_format_one_field(<<"orderDesc">>, <<>>) ->
+  %% orderDesc could not be omit or empty string
+  ok = bad;
+validate_format_one_field(<<"orderDesc">>, <<"\"\"">>) ->
+  ok = bad;
+validate_format_one_field(<<"orderDesc">>, _) ->
+  ok;
+validate_format_one_field(<<"signature">>, <<>>) ->
+  %% orderDesc could not be omit or empty string
+  ok = bad;
+validate_format_one_field(<<"signature">>, <<"\"\"">>) ->
+  ok = bad;
+validate_format_one_field(<<"signature">>, _) ->
+  ok;
+validate_format_one_field(_, _) ->
+  ok.
+
+validate_string(integer, String) when is_list(String) ->
+  validate_string(integer, list_to_binary(String));
+validate_string(integer, String) when is_binary(String) ->
+  try
+    binary_to_integer(String),
+    ok
+  catch
+    _:_ ->
+      fail
+  end;
+validate_string(bank_card_no, Value) when is_binary(Value) ->
+  ok = validate_string(integer, Value),
+  Len = byte_size(Value),
+  true = (?BankCardNoLenMin =< Len) and (?BankCardNoLenMax >= Len),
+  ok;
+validate_string(txn_amt, Value) when is_binary(Value) ->
+  ok = validate_string(integer, Value),
+  ok;
+validate_string(date_yyyymmdd, Value) when is_binary(Value) ->
+%%  8 = byte_size(Value),
+  xfutils:assert(yyyymmdd, Value),
+%%  ok = validate_string(integer, Value),
+%%  <<Y:4/bytes, M:2/bytes, D:2/bytes>> = Value,
+%%  Year = binary_to_integer(Y),
+%%  Month = binary_to_integer(M),
+%%  Day = binary_to_integer(D),
+%%  true = (Year > 2000) and (Year < 2030),
+%%  true = (Month > 0) and (Month < 13),
+%%  true = (Day > 0) and (Day < 32),
+  ok.
+
+validate_format_one_test() ->
+  ?assertEqual(ok, validate_format_one_field(<<"tranTime">>, <<"121212">>)),
+  ?assertError({badmatch, _}, validate_format_one_field(<<"tranTime">>, <<"u21212">>)),
+
+  ?assertEqual(ok, validate_format_one_field(<<"tranDate">>, <<"20161010">>)),
+%%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranDate">>, <<"201610yy">>)),
+  ?assertError(badarg, validate_format_one_field(<<"tranDate">>, <<"201610yy">>)),
+  ?assertError({badmatch, _}, validate_format_one_field(<<"tranDate">>, <<"19991919">>)),
+
+  ?assertEqual(ok, validate_format_one_field(<<"trustBackUrl">>, <<"http://www.a.b">>)),
+  ?assertError({badmatch, _}, validate_format_one_field(<<"trustBackUrl">>, <<"/www.a.b">>)),
+  ?assertError({badmatch, _}, validate_format_one_field(<<"trustBackUrl">>, <<"www.a.b">>)),
+
+  ?assertEqual(ok, validate_format_one_field(<<"trustFrontUrl">>, <<"http://www.a.b">>)),
+  ?assertError({badmatch, _}, validate_format_one_field(<<"trustFrontUrl">>, <<"/www.a.b">>)),
+  ?assertError({badmatch, _}, validate_format_one_field(<<"trustFrontUrl">>, <<"www.a.b">>)),
+
+  ?assertEqual(ok, validate_format_one_field(<<"tranAmt">>, <<"100">>)),
+  ?assertEqual(ok, validate_format_one_field(<<"tranAmt">>, <<"50">>)),
+%%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranAmt">>, <<"49">>)),
+%%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranAmt">>, <<"0">>)),
+%%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranAmt">>, <<"-30">>)),
+
+  ?assertError({badmatch, _}, validate_format_one_field(<<"orderDesc">>, <<>>)),
+  ?assertError({badmatch, _}, validate_format_one_field(<<"orderDesc">>, <<"">>)),
+  ?assertEqual(ok, validate_format_one_field(<<"orderDesc">>, <<"xxx">>)),
+
+  ok.
 
 %%====================================================================
 %% Internal functions
