@@ -8,7 +8,7 @@
 %%%-------------------------------------------------------------------
 -module(pg_mcht_protocol_t_repo_mcht_txn_log_pt).
 -compile({parse_trans, exprecs}).
--behavior(behaviour_repo).
+-behavior(pg_repo).
 -author("simon").
 
 %%-define(BH, behaviour_repo).
