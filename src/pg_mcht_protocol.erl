@@ -1,5 +1,6 @@
 -module(pg_mcht_protocol).
 -include_lib("eunit/include/eunit.hrl").
+-include("include/type_binaries.hrl").
 -behavior(pg_model).
 -behavior(pg_protocol).
 
@@ -186,8 +187,7 @@ validate_format_one_field(<<"tranDate">>, Value) when is_binary(Value) ->
 validate_format_one_field(<<"queryId">>, Value) when is_binary(Value) ->
   ok;
 validate_format_one_field(<<"trustBackUrl">>, Value) when is_binary(Value) ->
-  <<"http", _/binary>> = Value,
-  ok;
+  ok = validate_string(url, Value);
 validate_format_one_field(<<"trustFrontUrl">>, Value) when is_binary(Value) ->
   <<"http", _/binary>> = Value,
   ok;
@@ -198,23 +198,27 @@ validate_format_one_field(<<"bankCardNo">>, <<>>) ->
   ok;
 validate_format_one_field(<<"bankCardNo">>, Value) when is_binary(Value) ->
   ok = validate_string(bank_card_no, Value);
-validate_format_one_field(<<"orderDesc">>, <<>>) ->
+validate_format_one_field(<<"orderDesc">>, Value) when is_binary(Value) ->
   %% orderDesc could not be omit or empty string
-  ok = bad;
-validate_format_one_field(<<"orderDesc">>, <<"\"\"">>) ->
-  ok = bad;
-validate_format_one_field(<<"orderDesc">>, _) ->
-  ok;
-validate_format_one_field(<<"signature">>, <<>>) ->
+  ok = validate_string(not_empty, Value);
+validate_format_one_field(<<"signature">>, Value) ->
   %% orderDesc could not be omit or empty string
-  ok = bad;
-validate_format_one_field(<<"signature">>, <<"\"\"">>) ->
-  ok = bad;
-validate_format_one_field(<<"signature">>, _) ->
+  ok = validate_string(not_empty, Value);
+validate_format_one_field(<<"certifType">>, Value) when is_binary(Value) ->
+  ok = validate_string({length, 1, 2}, Value),
+  ok = validate_string({number, 1, 20}, Value);
+validate_format_one_field(<<"certifId">>, Value) when is_binary(Value) ->
+  ok = validate_string({length, 15, 18}, Value);
+validate_format_one_field(<<"certifName">>, Value) when is_binary(Value) ->
+  ok = validate_string(not_empty, Value);
+validate_format_one_field(<<"phoneNo">>, Value) when is_binary(Value) ->
+  ok = validate_string(mobile, Value);
+validate_format_one_field(<<"bankId">>, _) ->
   ok;
 validate_format_one_field(_, _) ->
   ok.
 
+%%------------------------------------------------------------
 validate_string(integer, String) when is_list(String) ->
   validate_string(integer, list_to_binary(String));
 validate_string(integer, String) when is_binary(String) ->
@@ -225,6 +229,15 @@ validate_string(integer, String) when is_binary(String) ->
     _:_ ->
       fail
   end;
+validate_string(url, Value) when is_binary(Value) ->
+  <<"http", _/binary>> = Value,
+  ok;
+validate_string(not_empty, <<>>) ->
+  ok = bad;
+validate_string(not_empty, <<"\"\"">>) ->
+  ok = bad;
+validate_string(not_empty, Value) when is_binary(Value) ->
+  ok;
 validate_string(bank_card_no, Value) when is_binary(Value) ->
   ok = validate_string(integer, Value),
   Len = byte_size(Value),
@@ -232,6 +245,20 @@ validate_string(bank_card_no, Value) when is_binary(Value) ->
   ok;
 validate_string(txn_amt, Value) when is_binary(Value) ->
   ok = validate_string(integer, Value),
+  ok;
+validate_string({length, Min, Max}, Value)
+  when is_binary(Value), is_integer(Min), is_integer(Max), (Min =< Max) ->
+  true = ((Min =< byte_size(Value)) and (byte_size(Value) =< Max)),
+  ok;
+validate_string({number, Min, Max}, Value)
+  when is_binary(Value), is_integer(Min), is_integer(Max), (Min =< Max) ->
+  ok = validate_string(integer, Value),
+  true = ((Min =< binary_to_integer(Value)) and (binary_to_integer(Value) =< Max)),
+  ok;
+validate_string(mobile, Value) when is_binary(Value) ->
+  ok = validate_string({length, 11, 11}, Value),
+  <<"1", _/binary>> = Value,
+  ok = validate_string({number, 10000000000, 19999999999}, Value),
   ok;
 validate_string(date_yyyymmdd, Value) when is_binary(Value) ->
 %%  8 = byte_size(Value),
@@ -270,8 +297,11 @@ validate_format_one_test() ->
 %%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranAmt">>, <<"-30">>)),
 
   ?assertError({badmatch, _}, validate_format_one_field(<<"orderDesc">>, <<>>)),
-  ?assertError({badmatch, _}, validate_format_one_field(<<"orderDesc">>, <<"">>)),
+  ?assertError({badmatch, _}, validate_format_one_field(<<"orderDesc">>, <<"\"\"">>)),
   ?assertEqual(ok, validate_format_one_field(<<"orderDesc">>, <<"xxx">>)),
+
+  ?assertEqual(ok, validate_format_one_field(<<"certifType">>, <<"01">>)),
+  ?assertError({badmatch, _}, validate_format_one_field(<<"certifType">>, <<"011">>)),
 
   ok.
 
