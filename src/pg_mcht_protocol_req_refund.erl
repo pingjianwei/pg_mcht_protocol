@@ -26,6 +26,7 @@
 -export([
   sign_fields/0
   , options/0
+  , save/2
 ]).
 %% callbacks of pg_protocol
 %%-------------------------------------------------------------------
@@ -42,8 +43,6 @@
   , orig_mcht_txn_seq = <<>>
   , orig_query_id = <<>>
   , signature = <<"9">>
-  , txn_type = refund
-  , txn_status = waiting
 }).
 
 -type ?TXN() :: #?TXN{}.
@@ -71,3 +70,14 @@ options() ->
 
 validate() ->
   true.
+
+%%---------------------------------
+save(M, Protocol) when is_atom(M), is_record(Protocol, ?TXN) ->
+  VL = [
+    {txn_type, refund}
+    , {txn_status, waiting}
+    , {mcht_index_key, pg_mcht_protocol:get(M, Protocol, mcht_index_key)}
+  ] ++ pg_model:to(M, Protocol, proplists),
+
+  Repo = pg_model:new(repo_mcht_txn_log_pt, VL),
+  pg_repo:save(Repo).

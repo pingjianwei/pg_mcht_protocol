@@ -40,8 +40,6 @@
   , orig_mcht_txn_seq = <<>>
   , orig_query_id = <<>>
   , signature
-%%  , mcht_index_key :: tuple()
-  , txn_type = query
 
 }).
 
@@ -69,3 +67,8 @@ options() ->
 
 validate() ->
   true.
+
+%%---------------------------------
+save(M, Protocol) when is_atom(M), is_record(Protocol, ?TXN) ->
+  %% no need to save query txn
+  ok.

@@ -4,7 +4,7 @@
 -behavior(pg_protocol).
 
 %% callbacks
--callback sign_fields() -> list().
+-callback sign_fields() -> [atom()].
 -callback options() -> map().
 -callback validate() -> boolean().
 -callback save(M :: atom(), Protocol :: pg_model:pg_model()) -> ok|fail.
@@ -42,9 +42,10 @@
 %% API functions
 %%====================================================================
 pr_formatter(Field)
-  when (Field =:= mcht_order_desc)
-  or (Field =:= signature)
-  or (Field =:= id_name)
+  when
+  (Field =:= mcht_order_desc)
+%%  or (Field =:= signature)
+    or (Field =:= id_name)
   ->
   string;
 pr_formatter(_) ->
@@ -78,6 +79,7 @@ in_2_out_map() ->
     , id_no => <<"certifId">>
     , id_name => <<"certifName">>
     , mobile => <<"phoneNo">>
+    , bank_id => <<"bankId">>
 
   }.
 %%------------------------------------------------------
