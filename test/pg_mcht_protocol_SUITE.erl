@@ -20,7 +20,7 @@
 
 setup() ->
   lager:start(),
-  pg_mcht_enc:start(),
+  application:start(pg_mcht_enc),
 
   pg_test_utils:setup(mnesia),
 
