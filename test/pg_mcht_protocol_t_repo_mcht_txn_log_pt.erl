@@ -33,20 +33,15 @@
   mcht_index_key
   , txn_type :: txn_type()
   , mcht_id
-  , mcht_txn_date
-  , mcht_txn_time
-  , mcht_txn_seq
-  , mcht_txn_amt :: txn_amt()
-  , mcht_order_desc
+  , txn_date
+  , txn_time
+  , txn_seq
+  , txn_amt :: txn_amt()
+  , order_desc
   , gateway_id
   , bank_id
-  , prod_id
-  , prod_bank_acct_id
-  , prod_bank_acct_corp_name
-  , prod_bank_name
-  , mcht_back_url
-  , mcht_front_url
-  , prod_memo
+  , back_url
+  , front_url
 
   , query_id
   , settle_date
@@ -60,6 +55,10 @@
 
   , txn_status = waiting :: status()
   , bank_card_no
+  , id_type
+  , id_no
+  , id_name
+  , mobile
 
 
 }).
@@ -71,7 +70,7 @@
 %% call backs
 table_config() ->
   #{
-    table_indexes => [mcht_txn_date]
+    table_indexes => [txn_date]
     , data_init => []
     , pk_is_sequence => false
     , pk_key_name => mcht_index_key

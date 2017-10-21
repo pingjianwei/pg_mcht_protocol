@@ -15,6 +15,7 @@
 
 -define(M_Protocol, pg_mcht_protocol_t_protocol_mcht_req_pay).
 -define(M_Repo, pg_mcht_protocol_t_repo_mcht_txn_log_pt).
+-define(APP, pg_mcht_protocol).
 
 -compile(export_all).
 
@@ -27,6 +28,8 @@ setup() ->
   pg_repo:drop(?M_Repo),
   pg_repo:init(?M_Repo),
 
+
+  application:set_env(?APP, mcht_repo_name, pg_mcht_protocol_t_repo_mcht_txn_log_pt),
   ok.
 
 
@@ -40,7 +43,9 @@ my_test_() ->
       [
         fun verify_test_1/0
         , fun sign_test_1/0
+        , fun save_test_1/0
         , fun collect_sign_test_1/0
+        , fun collect_save_test_1/0
       ]
     }
 
@@ -71,7 +76,7 @@ qs(collect) ->
     , {<<"bankCardNo">>, <<"9555500216246958">>}
     , {<<"tranDate">>, <<"20171021">>}
     , {<<"tranTime">>, <<"095817">>}
-    , {<<"signature">>, <<>>}
+    , {<<"signature">>, <<"16808B681094E884DC4EDF3882D59AFA4063D1D58867EAC6E52852F1018E2363A93F5790E2E737411716270A9A04B394294A1F91599C9603DA0EC96EE82B796CF483C94BC4D88C85EB7CE3B0EC9C142D7F512C95B428AF16F870C7458A07A270EE7773BAA44414462D7FAEBC430E59FCAB1AEAC587520D15933EDEC262741A9FE8D7F12DFEB8C87F568F3B9E074103E7731D8713275BA004B18C33F54C4ABB9815B63AF3A2585B4268354E52B19D094D33653771D77949E873A683AD9E9282EC75E8D1DF22F845FCCD9B50F2971072A82026A0D270E78B63C55ED065DE025F472E04B9F24D8F31AE0BE9133E42F029CF18C7128F13770B3F7BEC9DCBC329527B">>}
     , {<<"certifType">>, <<"01">>}
     , {<<"certifId">>, <<"320404197205161013">>}
     , {<<"certifName">>, <<"徐峰"/utf8>>}
@@ -175,6 +180,7 @@ save_test_1() ->
 collect_sign_string_test() ->
   M = pg_mcht_protocol_req_collect,
   P = protocol(collect),
+  ?assertEqual({ok, <<>>, <<>>}, pg_mcht_protocol:validate_format(qs(collect))),
   ?assertEqual(<<"00001201710212017102109581747346084709581750测试交易http://localhost:8888/pg/simu_mcht_back_succ_info955550021624695801320404197205161013徐峰13916043073"/utf8>>,
     pg_mcht_protocol:sign_string(M, P)),
   ?assertEqual(pk(collect), pg_mcht_protocol:get(M, P, mcht_index_key)),
@@ -186,4 +192,16 @@ collect_sign_test_1() ->
   {_, Sig} = pg_mcht_protocol:sign(M, P),
   ?assertEqual(<<"16808B681094E884DC4EDF3882D59AFA4063D1D58867EAC6E52852F1018E2363A93F5790E2E737411716270A9A04B394294A1F91599C9603DA0EC96EE82B796CF483C94BC4D88C85EB7CE3B0EC9C142D7F512C95B428AF16F870C7458A07A270EE7773BAA44414462D7FAEBC430E59FCAB1AEAC587520D15933EDEC262741A9FE8D7F12DFEB8C87F568F3B9E074103E7731D8713275BA004B18C33F54C4ABB9815B63AF3A2585B4268354E52B19D094D33653771D77949E873A683AD9E9282EC75E8D1DF22F845FCCD9B50F2971072A82026A0D270E78B63C55ED065DE025F472E04B9F24D8F31AE0BE9133E42F029CF18C7128F13770B3F7BEC9DCBC329527B">>,
     Sig),
+  ok.
+
+collect_save_test_1() ->
+  M = pg_mcht_protocol_req_collect,
+  P = protocol(collect),
+  MRepo = pg_mcht_protocol:repo_mcht_module(),
+  lager:error("M=~p,P=~p", [M, P]),
+  pg_mcht_protocol:save(M, P),
+
+  [Repo] = pg_repo:read(MRepo, pk(collect)),
+  ?assertEqual([collect, waiting, 50, <<"320404197205161013">>, <<"徐峰"/utf8>>],
+    pg_model:get(MRepo, Repo, [txn_type, txn_status, txn_amt, id_no, id_name])),
   ok.

@@ -12,7 +12,9 @@
         , pg_protocol
 
       ]},
-    {env, []},
+    {env, [
+      {mcht_repo_name, repo_mcht_txn_log_pt}
+    ]},
     {modules, []},
 
     {maintainers, []},

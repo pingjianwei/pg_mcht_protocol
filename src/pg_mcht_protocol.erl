@@ -8,7 +8,7 @@
 -callback sign_fields() -> [atom()].
 -callback options() -> map().
 -callback validate() -> boolean().
--callback save(M :: atom(), Protocol :: pg_model:pg_model()) -> ok|fail.
+-callback to_list(Protocol :: pg_model:pg_model()) -> ok|fail.
 
 %% API exports
 %% callbacks of pg_protocol
@@ -30,13 +30,14 @@
   , sign/2
   , validate_format/1
   , save/2
-
+  , repo_mcht_module/0
 ]).
 
 -type validate_result() :: ok | fail.
 -type resp_cd() :: binary().
 -type resp_msg() :: binary().
 
+-define(APP, pg_mcht_protocol).
 %%====================================================================
 %% API functions
 %%====================================================================
@@ -146,17 +147,11 @@ sign(M, P) when is_atom(M), is_tuple(P) ->
   Result :: ok |fail.
 
 save(M, Protocol) when is_atom(M), is_tuple(Protocol) ->
-  Options = M:options(),
-  TxnStatus = maps:get(txn_type, Options),
+  VL = M:to_list(Protocol) ,
 
-  case maps:get(direction, Options) of
-    req ->
-      waiting;
-    resp ->
-      get
-  end,
-
-  ok.
+  MRepo = repo_mcht_module(),
+  Repo = pg_model:new(MRepo, VL),
+  pg_repo:save(Repo).
 %%------------------------------------------------------
 -spec validate_format(VL) -> Result when
   VL :: proplists:proplist(),
@@ -186,6 +181,11 @@ validate_format_test() ->
   PostVals = pg_mcht_protocol_SUITE:qs(pay),
   ?assertEqual({ok, <<>>, <<>>}, validate_format(PostVals)),
   ok.
+
+%%------------------------------------------------------
+repo_mcht_module() ->
+  {ok, Module} = application:get_env(?APP, mcht_repo_name),
+  Module.
 %%====================================================================
 %% Internal functions
 %%====================================================================

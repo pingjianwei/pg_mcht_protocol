@@ -33,7 +33,7 @@
 -export([
   sign_fields/0
   , options/0
-  , save/2
+  , to_list/1
 ]).
 
 %% callbacks of pg_protocol
@@ -92,15 +92,15 @@ options() ->
   }.
 
 %%---------------------------------
-save(M, Protocol) when is_atom(M), is_tuple(Protocol) ->
+to_list(Protocol) when is_tuple(Protocol) ->
   VL = [
     {txn_type, pay}
     , {txn_status, waiting}
-    , {index_key, pg_protocol:get(M, Protocol, index_key)}
-  ] ++ pg_model:to(M, Protocol, proplists),
+    , {mcht_index_key, pg_mcht_protocol:get(?MODULE, Protocol, mcht_index_key)}
+  ] ++ pg_model:to(?MODULE, Protocol, proplists),
+  VL.
 
-  Repo = pg_model:new(repo_txn_log_pt, VL),
-  pg_repo:save(Repo).
+
 %%===============================================
 %% UT
 %%==============================================

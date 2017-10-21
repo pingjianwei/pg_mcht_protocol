@@ -25,7 +25,7 @@
 -export([
   sign_fields/0
   , options/0
-  , save/2
+  , to_list/1
 ]).
 %%-------------------------------------------------------------------
 -define(P, ?MODULE).
@@ -75,5 +75,10 @@ options() ->
     direction => req
   }.
 
-save(M, P) ->
-  ok.
+to_list(Protocol) when is_tuple(Protocol) ->
+  VL = [
+    {txn_type, collect}
+    , {txn_status, waiting}
+    , {mcht_index_key, pg_mcht_protocol:get(?MODULE, Protocol, mcht_index_key)}
+  ] ++ pg_model:to(?MODULE, Protocol, proplists),
+  VL.
