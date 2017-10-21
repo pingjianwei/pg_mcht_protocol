@@ -14,7 +14,7 @@
 -type date() :: {Year :: 1900..2100, Month :: 1..12, Day :: 1..31}.
 -type time() :: {Hour :: 0..23, Min :: 0..59, Second :: 0..59}.
 
--type mcht_id() :: non_neg_integer()
+-type mcht_id() :: non_neg_integer().
 -type txn_date() :: byte8().
 -type txn_time() :: byte6().
 -type txn_seq() :: byte23_up().

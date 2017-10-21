@@ -1,8 +1,8 @@
 -module(pg_mcht_protocol).
 -include_lib("eunit/include/eunit.hrl").
--include("include/type_binaries.hrl").
--behavior(pg_model).
--behavior(pg_protocol).
+-include("include/type_mcht_protocol.hrl").
+%%-behavior(pg_model).
+%%-behavior(pg_protocol).
 
 %% callbacks
 -callback sign_fields() -> [atom()].
@@ -34,8 +34,6 @@
 ]).
 
 -type validate_result() :: ok | fail.
--type resp_cd() :: binary().
--type resp_msg() :: binary().
 
 -define(APP, pg_mcht_protocol).
 %%====================================================================
@@ -147,7 +145,7 @@ sign(M, P) when is_atom(M), is_tuple(P) ->
   Result :: ok |fail.
 
 save(M, Protocol) when is_atom(M), is_tuple(Protocol) ->
-  VL = M:to_list(Protocol) ,
+  VL = M:to_list(Protocol),
 
   MRepo = repo_mcht_module(),
   Repo = pg_model:new(MRepo, VL),
@@ -155,7 +153,7 @@ save(M, Protocol) when is_atom(M), is_tuple(Protocol) ->
 %%------------------------------------------------------
 -spec validate_format(VL) -> Result when
   VL :: proplists:proplist(),
-  Result :: {validate_result, validate_result(), resp_cd(), resp_msg()}.
+  Result :: {validate_result, validate_result(), resp_code(), resp_msg()}.
 
 validate_format(Params) when is_list(Params) ->
   F = fun({Key, Value}, {ok, _, _} = _AccIn) when is_binary(Key) ->
