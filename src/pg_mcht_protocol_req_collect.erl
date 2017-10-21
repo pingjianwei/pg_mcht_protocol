@@ -56,12 +56,12 @@
 sign_fields() ->
   [
     mcht_id
-    , mcht_txn_date
-    , mcht_txn_seq
-    , mcht_txn_time
-    , mcht_txn_amt
-    , mcht_order_desc
-    , mcht_back_url
+    , txn_date
+    , txn_seq
+    , txn_time
+    , txn_amt
+    , order_desc
+    , back_url
     , bank_card_no
     , id_type
     , id_no

@@ -42,13 +42,13 @@
 
 -record(?TXN, {
   mcht_id = 9999
-  , mcht_txn_date = <<>>
-  , mcht_txn_time = <<>>
-  , mcht_txn_seq = <<"9999">>
-  , mcht_txn_amt = 0
-  , mcht_order_desc = <<>>
-  , mcht_front_url
-  , mcht_back_url
+  , txn_date = <<>>
+  , txn_time = <<>>
+  , txn_seq = <<"9999">>
+  , txn_amt = 0
+  , order_desc = <<>>
+  , front_url
+  , back_url
   , signature = <<"9">>
   , bank_card_no = <<>>
 }).
@@ -59,21 +59,21 @@
 
 %%-------------------------------------------------------------------
 %%pr_formatter(Field) ->
-%%  pg_mcht_protocol:pr_formatter(Field).
+%%  pg_protocol:pr_formatter(Field).
 
 %%in_2_out_map() ->
-%%  pg_mcht_protocol:in_2_out_map().
+%%  pg_protocol:in_2_out_map().
 
 sign_fields() ->
   [
     mcht_id
-    , mcht_txn_date
-    , mcht_txn_seq
-    , mcht_txn_time
-    , mcht_txn_amt
-    , mcht_order_desc
-    , mcht_back_url
-    , mcht_front_url
+    , txn_date
+    , txn_seq
+    , txn_time
+    , txn_amt
+    , order_desc
+    , back_url
+    , front_url
     , bank_card_no
 
   ].
@@ -96,10 +96,10 @@ save(M, Protocol) when is_atom(M), is_tuple(Protocol) ->
   VL = [
     {txn_type, pay}
     , {txn_status, waiting}
-    , {mcht_index_key, pg_mcht_protocol:get(M, Protocol, mcht_index_key)}
+    , {index_key, pg_protocol:get(M, Protocol, index_key)}
   ] ++ pg_model:to(M, Protocol, proplists),
 
-  Repo = pg_model:new(repo_mcht_txn_log_pt, VL),
+  Repo = pg_model:new(repo_txn_log_pt, VL),
   pg_repo:save(Repo).
 %%===============================================
 %% UT

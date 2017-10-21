@@ -29,6 +29,7 @@
   , sign_string/2
   , sign/2
   , validate_format/1
+  , save/2
 
 ]).
 
@@ -36,15 +37,12 @@
 -type resp_cd() :: binary().
 -type resp_msg() :: binary().
 
--define(TxnAmtMin, 50).
--define(BankCardNoLenMin, 15).
--define(BankCardNoLenMax, 21).
 %%====================================================================
 %% API functions
 %%====================================================================
 pr_formatter(Field)
   when
-  (Field =:= mcht_order_desc)
+  (Field =:= order_desc)
 %%  or (Field =:= signature)
     or (Field =:= id_name)
   ->
@@ -57,17 +55,17 @@ pr_formatter(_) ->
 in_2_out_map() ->
   #{
     mcht_id => <<"merchId">>
-    , mcht_txn_date => <<"tranDate">>
-    , mcht_txn_seq => <<"tranId">>
-    , mcht_txn_time => <<"tranTime">>
-    , mcht_txn_amt => {<<"tranAmt">>, integer}
-    , mcht_order_desc=> <<"orderDesc">>
+    , txn_date => <<"tranDate">>
+    , txn_seq => <<"tranId">>
+    , txn_time => <<"tranTime">>
+    , txn_amt => {<<"tranAmt">>, integer}
+    , order_desc=> <<"orderDesc">>
     , signature=> <<"signature">>
-    , mcht_front_url=> <<"trustFrontUrl">>
-    , mcht_back_url=> <<"trustBackUrl">>
+    , front_url=> <<"trustFrontUrl">>
+    , back_url=> <<"trustBackUrl">>
     , bank_card_no=> <<"bankCardNo">>
-    , orig_mcht_txn_date => <<"origTranDate">>
-    , orig_mcht_txn_seq => <<"origTranId">>
+    , orig_txn_date => <<"origTranDate">>
+    , orig_txn_seq => <<"origTranId">>
     , orig_query_id => <<"origQueryId">>
     , orig_resp_code => <<"origRespCode">>
     , orig_resp_msg => <<"origRespMsg">>
@@ -90,8 +88,8 @@ in_2_out_map() ->
 get(M, Model, mcht_index_key) when is_atom(M), is_tuple(Model) ->
   {
     pg_model:get(M, Model, mcht_id)
-    , pg_model:get(M, Model, mcht_txn_date)
-    , pg_model:get(M, Model, mcht_txn_seq)
+    , pg_model:get(M, Model, txn_date)
+    , pg_model:get(M, Model, txn_seq)
   };
 get(M, Model, Field) when is_atom(Field), is_atom(M), is_tuple(Model) ->
   pg_model:get(M, Model, Field).
@@ -133,178 +131,13 @@ sign_value(Value) when is_binary(Value) ->
 
 sign(M, P) when is_atom(M), is_tuple(P) ->
   SignString = sign_string(M, P),
-  MchtId = binary_to_integer(pg_model:get(M, P, mcht_id)),
+  MchtId = pg_model:get(M, P, mcht_id),
 
   Direction = direction(M),
 
   Sig = pg_mcht_enc:sign_hex(MchtId, Direction, SignString),
   lager:debug("SignString = ~ts,Sig = ~ts", [SignString, Sig]),
   {SignString, Sig}.
-
-%%------------------------------------------------------
--spec validate_format(VL) -> Result when
-  VL :: proplists:proplist(),
-  Result :: {validate_result, validate_result(), resp_cd(), resp_msg()}.
-
-validate_format(Params) when is_list(Params) ->
-  F = fun({Key, Value}, {ok, _, _} = _AccIn) when is_binary(Key) ->
-    try
-      validate_format_one_field(Key, Value),
-      {ok, <<>>, <<>>}
-    catch
-      _:_ ->
-        ErrorMsg = <<Key/binary, "=[", Value/binary, "]格式错误"/utf8>>,
-        lager:error("Post vals error = ~ts", [ErrorMsg]),
-        {fail, <<"99">>, ErrorMsg}
-    end;
-
-    (_, {fail, _, _} = AccIn) ->
-      %% previous post kv already validate fail, just pass it throuth
-      AccIn
-      end,
-
-  {OkOrFail, RespCd, RespMsg} = lists:foldl(F, {ok, <<>>, <<>>}, Params),
-  {OkOrFail, RespCd, RespMsg}.
-
-validate_format_test() ->
-  PostVals = pg_mcht_protocol_SUITE:qs(),
-  ?assertEqual({ok, <<>>, <<>>}, validate_format(PostVals)),
-  ok.
-
-%% for mcht req
-validate_format_one_field(<<"merchId">>, Value) when is_binary(Value) ->
-  ok = validate_string(integer, Value);
-validate_format_one_field(<<"tranTime">>, Value) when is_binary(Value) ->
-  6 = byte_size(Value),
-  ok = validate_string(integer, Value);
-%%validate_format_one(mcht, <<"origTranDate">>, <<>>) ->
-%%  %% can be empty?
-%%  ok;
-validate_format_one_field(<<"origTranDate">>, Value) when is_binary(Value) ->
-  ok = validate_string(date_yyyymmdd, Value);
-validate_format_one_field(<<"tranDate">>, Value) when is_binary(Value) ->
-  ok = validate_string(date_yyyymmdd, Value);
-validate_format_one_field(<<"queryId">>, Value) when is_binary(Value) ->
-  ok;
-validate_format_one_field(<<"trustBackUrl">>, Value) when is_binary(Value) ->
-  ok = validate_string(url, Value);
-validate_format_one_field(<<"trustFrontUrl">>, Value) when is_binary(Value) ->
-  <<"http", _/binary>> = Value,
-  ok;
-validate_format_one_field(<<"tranAmt">>, Value) when is_binary(Value) ->
-  ok = validate_string(txn_amt, Value);
-validate_format_one_field(<<"bankCardNo">>, <<>>) ->
-  %% can be empty
-  ok;
-validate_format_one_field(<<"bankCardNo">>, Value) when is_binary(Value) ->
-  ok = validate_string(bank_card_no, Value);
-validate_format_one_field(<<"orderDesc">>, Value) when is_binary(Value) ->
-  %% orderDesc could not be omit or empty string
-  ok = validate_string(not_empty, Value);
-validate_format_one_field(<<"signature">>, Value) ->
-  %% orderDesc could not be omit or empty string
-  ok = validate_string(not_empty, Value);
-validate_format_one_field(<<"certifType">>, Value) when is_binary(Value) ->
-  ok = validate_string({length, 1, 2}, Value),
-  ok = validate_string({number, 1, 20}, Value);
-validate_format_one_field(<<"certifId">>, Value) when is_binary(Value) ->
-  ok = validate_string({length, 15, 18}, Value);
-validate_format_one_field(<<"certifName">>, Value) when is_binary(Value) ->
-  ok = validate_string(not_empty, Value);
-validate_format_one_field(<<"phoneNo">>, Value) when is_binary(Value) ->
-  ok = validate_string(mobile, Value);
-validate_format_one_field(<<"bankId">>, _) ->
-  ok;
-validate_format_one_field(_, _) ->
-  ok.
-
-%%------------------------------------------------------------
-validate_string(integer, String) when is_list(String) ->
-  validate_string(integer, list_to_binary(String));
-validate_string(integer, String) when is_binary(String) ->
-  try
-    binary_to_integer(String),
-    ok
-  catch
-    _:_ ->
-      fail
-  end;
-validate_string(url, Value) when is_binary(Value) ->
-  <<"http", _/binary>> = Value,
-  ok;
-validate_string(not_empty, <<>>) ->
-  ok = bad;
-validate_string(not_empty, <<"\"\"">>) ->
-  ok = bad;
-validate_string(not_empty, Value) when is_binary(Value) ->
-  ok;
-validate_string(bank_card_no, Value) when is_binary(Value) ->
-  ok = validate_string(integer, Value),
-  Len = byte_size(Value),
-  true = (?BankCardNoLenMin =< Len) and (?BankCardNoLenMax >= Len),
-  ok;
-validate_string(txn_amt, Value) when is_binary(Value) ->
-  ok = validate_string(integer, Value),
-  ok;
-validate_string({length, Min, Max}, Value)
-  when is_binary(Value), is_integer(Min), is_integer(Max), (Min =< Max) ->
-  true = ((Min =< byte_size(Value)) and (byte_size(Value) =< Max)),
-  ok;
-validate_string({number, Min, Max}, Value)
-  when is_binary(Value), is_integer(Min), is_integer(Max), (Min =< Max) ->
-  ok = validate_string(integer, Value),
-  true = ((Min =< binary_to_integer(Value)) and (binary_to_integer(Value) =< Max)),
-  ok;
-validate_string(mobile, Value) when is_binary(Value) ->
-  ok = validate_string({length, 11, 11}, Value),
-  <<"1", _/binary>> = Value,
-  ok = validate_string({number, 10000000000, 19999999999}, Value),
-  ok;
-validate_string(date_yyyymmdd, Value) when is_binary(Value) ->
-%%  8 = byte_size(Value),
-  xfutils:assert(yyyymmdd, Value),
-%%  ok = validate_string(integer, Value),
-%%  <<Y:4/bytes, M:2/bytes, D:2/bytes>> = Value,
-%%  Year = binary_to_integer(Y),
-%%  Month = binary_to_integer(M),
-%%  Day = binary_to_integer(D),
-%%  true = (Year > 2000) and (Year < 2030),
-%%  true = (Month > 0) and (Month < 13),
-%%  true = (Day > 0) and (Day < 32),
-  ok.
-
-validate_format_one_test() ->
-  ?assertEqual(ok, validate_format_one_field(<<"tranTime">>, <<"121212">>)),
-  ?assertError({badmatch, _}, validate_format_one_field(<<"tranTime">>, <<"u21212">>)),
-
-  ?assertEqual(ok, validate_format_one_field(<<"tranDate">>, <<"20161010">>)),
-%%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranDate">>, <<"201610yy">>)),
-  ?assertError(badarg, validate_format_one_field(<<"tranDate">>, <<"201610yy">>)),
-  ?assertError({badmatch, _}, validate_format_one_field(<<"tranDate">>, <<"19991919">>)),
-
-  ?assertEqual(ok, validate_format_one_field(<<"trustBackUrl">>, <<"http://www.a.b">>)),
-  ?assertError({badmatch, _}, validate_format_one_field(<<"trustBackUrl">>, <<"/www.a.b">>)),
-  ?assertError({badmatch, _}, validate_format_one_field(<<"trustBackUrl">>, <<"www.a.b">>)),
-
-  ?assertEqual(ok, validate_format_one_field(<<"trustFrontUrl">>, <<"http://www.a.b">>)),
-  ?assertError({badmatch, _}, validate_format_one_field(<<"trustFrontUrl">>, <<"/www.a.b">>)),
-  ?assertError({badmatch, _}, validate_format_one_field(<<"trustFrontUrl">>, <<"www.a.b">>)),
-
-  ?assertEqual(ok, validate_format_one_field(<<"tranAmt">>, <<"100">>)),
-  ?assertEqual(ok, validate_format_one_field(<<"tranAmt">>, <<"50">>)),
-%%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranAmt">>, <<"49">>)),
-%%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranAmt">>, <<"0">>)),
-%%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranAmt">>, <<"-30">>)),
-
-  ?assertError({badmatch, _}, validate_format_one_field(<<"orderDesc">>, <<>>)),
-  ?assertError({badmatch, _}, validate_format_one_field(<<"orderDesc">>, <<"\"\"">>)),
-  ?assertEqual(ok, validate_format_one_field(<<"orderDesc">>, <<"xxx">>)),
-
-  ?assertEqual(ok, validate_format_one_field(<<"certifType">>, <<"01">>)),
-  ?assertError({badmatch, _}, validate_format_one_field(<<"certifType">>, <<"011">>)),
-
-  ok.
-
 
 %%------------------------------------------------------
 -spec save(M, Protocol) -> Result when
@@ -324,6 +157,35 @@ save(M, Protocol) when is_atom(M), is_tuple(Protocol) ->
   end,
 
   ok.
+%%------------------------------------------------------
+-spec validate_format(VL) -> Result when
+  VL :: proplists:proplist(),
+  Result :: {validate_result, validate_result(), resp_cd(), resp_msg()}.
+
+validate_format(Params) when is_list(Params) ->
+  F = fun({Key, Value}, {ok, _, _} = _AccIn) when is_binary(Key) ->
+    try
+      pg_mcht_protocol_validate:validate_format_one_field(Key, Value),
+      {ok, <<>>, <<>>}
+    catch
+      _:_ ->
+        ErrorMsg = <<Key/binary, "=[", Value/binary, "]格式错误"/utf8>>,
+        lager:error("Post vals error = ~ts", [ErrorMsg]),
+        {fail, <<"99">>, ErrorMsg}
+    end;
+
+    (_, {fail, _, _} = AccIn) ->
+      %% previous post kv already validate fail, just pass it throuth
+      AccIn
+      end,
+
+  {OkOrFail, RespCd, RespMsg} = lists:foldl(F, {ok, <<>>, <<>>}, Params),
+  {OkOrFail, RespCd, RespMsg}.
+
+validate_format_test() ->
+  PostVals = pg_mcht_protocol_SUITE:qs(pay),
+  ?assertEqual({ok, <<>>, <<>>}, validate_format(PostVals)),
+  ok.
 %%====================================================================
 %% Internal functions
 %%====================================================================
@@ -333,16 +195,14 @@ do_verify_msg(M, P, SignFields) when is_atom(M), is_tuple(P), is_list(SignFields
 
   Direction = direction(M),
 
-  case pg_mcht_enc:verify_hex(
-    binary_to_integer(pg_model:get(M, P, mcht_id))
-    , Direction, SignString, Signature) of
+  case pg_mcht_enc:verify_hex(pg_model:get(M, P, mcht_id), Direction, SignString, Signature) of
     true -> ok;
     false ->
       % verify fail
       lager:error("sig verify failed. SignString = ~ts,"
       "Sig=~ts,txnDate = ~ts,txnSeq=~ts",
-        [SignString, Signature, pg_model:get(M, P, mcht_txn_date),
-          pg_model:get(M, P, mcht_txn_seq)]),
+        [SignString, Signature, pg_model:get(M, P, txn_date),
+          pg_model:get(M, P, txn_seq)]),
       fail
   end.
 
