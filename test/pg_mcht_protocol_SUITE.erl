@@ -46,6 +46,8 @@ my_test_() ->
         , fun save_test_1/0
         , fun collect_sign_test_1/0
         , fun collect_save_test_1/0
+        , fun collect_validate_test_1/0
+        , fun collect_verify_test_1/0
       ]
     }
 
@@ -180,7 +182,6 @@ save_test_1() ->
 collect_sign_string_test() ->
   M = pg_mcht_protocol_req_collect,
   P = protocol(collect),
-  ?assertEqual({ok, <<>>, <<>>}, pg_mcht_protocol:validate_format(qs(collect))),
   ?assertEqual(<<"00001201710212017102109581747346084709581750测试交易http://localhost:8888/pg/simu_mcht_back_succ_info955550021624695801320404197205161013徐峰13916043073"/utf8>>,
     pg_mcht_protocol:sign_string(M, P)),
   ?assertEqual(pk(collect), pg_mcht_protocol:get(M, P, mcht_index_key)),
@@ -194,6 +195,12 @@ collect_sign_test_1() ->
     Sig),
   ok.
 
+collect_verify_test_1() ->
+  M = pg_mcht_protocol_req_collect,
+  P = protocol(collect),
+  ?assertEqual(ok, pg_mcht_protocol:verify(M, P)),
+  ok.
+
 collect_save_test_1() ->
   M = pg_mcht_protocol_req_collect,
   P = protocol(collect),
@@ -205,3 +212,10 @@ collect_save_test_1() ->
   ?assertEqual([collect, waiting, 50, <<"320404197205161013">>, <<"徐峰"/utf8>>],
     pg_model:get(MRepo, Repo, [txn_type, txn_status, txn_amt, id_no, id_name])),
   ok.
+
+collect_validate_test_1() ->
+  M = pg_mcht_protocol_req_collect,
+  P = protocol(collect),
+  ?assertEqual({ok, <<>>, <<>>}, pg_mcht_protocol:validate_format(qs(collect))),
+  ok.
+
