@@ -11,6 +11,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("mixer/include/mixer.hrl").
 -behaviour(pg_model).
+-behavior(pg_convert).
 -behaviour(pg_protocol).
 -behaviour(pg_mcht_protocol).
 
@@ -34,6 +35,10 @@
   sign_fields/0
   , options/0
   , to_list/1
+]).
+
+-export([
+  convert_config/0
 ]).
 
 %% callbacks of pg_protocol

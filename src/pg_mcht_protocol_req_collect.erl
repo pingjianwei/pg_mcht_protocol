@@ -11,6 +11,7 @@
 -author("simon").
 -include_lib("mixer/include/mixer.hrl").
 -behaviour(pg_model).
+-behavior(pg_convert).
 -behavior(pg_protocol).
 -behaviour(pg_mcht_protocol).
 
