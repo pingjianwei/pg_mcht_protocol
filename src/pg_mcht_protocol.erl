@@ -8,7 +8,7 @@
 -callback sign_fields() -> [atom()].
 -callback options() -> map().
 -callback validate() -> boolean().
--callback to_list(Protocol :: pg_model:pg_model()) -> proplists:proplist().
+%%-callback to_list(Protocol :: pg_model:pg_model()) -> proplists:proplist().
 
 %% API exports
 %% callbacks of pg_protocol
