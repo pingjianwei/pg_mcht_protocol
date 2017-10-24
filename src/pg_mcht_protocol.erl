@@ -145,10 +145,10 @@ sign(M, P) when is_atom(M), is_tuple(P) ->
   Result :: ok |fail.
 
 save(M, Protocol) when is_atom(M), is_tuple(Protocol) ->
-  VL = M:to_list(Protocol),
-
-  MRepo = repo_mcht_module(),
-  Repo = pg_model:new(MRepo, VL),
+%%  VL = M:to_list(Protocol),
+%%  MRepo = repo_mcht_module(),
+%%  Repo = pg_model:new(MRepo, VL),
+  Repo = pg_convert:convert(M, [Protocol, Protocol], save_req),
   pg_repo:save(Repo).
 %%------------------------------------------------------
 -spec validate_format(VL) -> Result when

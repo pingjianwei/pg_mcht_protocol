@@ -169,6 +169,11 @@ sign_test_1() ->
 save_test_1() ->
   P = protocol(pay),
 
+  Repo = pg_convert:convert(?M_Protocol, [P, P], save_req),
+  ?assertEqual(pay, pg_model:get(?M_Repo, Repo, txn_type)),
+  ?assertEqual(<<"00001">>, pg_model:get(?M_Repo, Repo, mcht_id)),
+  ?assertEqual(pk(pay), pg_model:get(?M_Repo, Repo, mcht_index_key)),
+
   pg_mcht_protocol:save(?M_Protocol, P),
 
   [Repo] = pg_repo:read(?M_Repo, pk(pay)),

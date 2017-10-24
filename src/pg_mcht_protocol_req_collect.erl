@@ -21,6 +21,11 @@
   pr_formatter/1
   , in_2_out_map/0
 ]}]).
+
+%% callbacks of pg_convert
+-export([
+  convert_config/0
+]).
 %% API
 %% callbacks of pg_protocol
 -export([
@@ -83,3 +88,24 @@ to_list(Protocol) when is_tuple(Protocol) ->
     , {mcht_index_key, pg_mcht_protocol:get(?MODULE, Protocol, mcht_index_key)}
   ] ++ pg_model:to(?MODULE, Protocol, proplists),
   VL.
+
+convert_config() ->
+  [
+    {save_req,
+      [
+
+        {to, fun pg_mcht_protocol:repo_mcht_module/0},
+        {from,
+          [
+            {?MODULE,
+              [
+                {txn_type, {static, collect}}
+                , {txn_status, {static, waiting}}
+                , {mcht_index_key, pg_mcht_protocol, mcht_index_key}
+              ]
+            },
+            {?MODULE, all}
+          ]}
+      ]
+    }
+  ].

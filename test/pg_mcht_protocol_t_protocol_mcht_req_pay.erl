@@ -83,11 +83,6 @@ sign_fields() ->
 
   ].
 
-convert_config() ->
-  [
-
-  ].
-
 %%---------------------------------
 options() ->
   #{
@@ -106,6 +101,26 @@ to_list(Protocol) when is_tuple(Protocol) ->
   VL.
 
 
+convert_config() ->
+  [
+    {save_req,
+      [
+
+        {to, fun pg_mcht_protocol:repo_mcht_module/0},
+        {from,
+          [
+            {?MODULE,
+              [
+                {txn_type, {static, pay}}
+                , {txn_status, {static, waiting}}
+                , {mcht_index_key, pg_mcht_protocol, mcht_index_key}
+              ]
+            },
+            {?MODULE, all}
+          ]}
+      ]
+    }
+  ].
 %%===============================================
 %% UT
 %%==============================================
