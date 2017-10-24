@@ -34,7 +34,6 @@
 -export([
   sign_fields/0
   , options/0
-  , to_list/1
 ]).
 
 -export([
