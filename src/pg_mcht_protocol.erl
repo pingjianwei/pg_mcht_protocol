@@ -149,7 +149,8 @@ save(M, Protocol) when is_atom(M), is_tuple(Protocol) ->
 %%  MRepo = repo_mcht_module(),
 %%  Repo = pg_model:new(MRepo, VL),
   Repo = pg_convert:convert(M, [Protocol, Protocol], save_req),
-  pg_repo:save(Repo).
+  pg_repo:save(Repo),
+  {ok, Repo}.
 %%------------------------------------------------------
 -spec validate_format(VL) -> Result when
   VL :: proplists:proplist(),
