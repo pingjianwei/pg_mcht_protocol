@@ -13,9 +13,6 @@
 %% API
 -export([validate_format_one_field/2]).
 
--define(TxnAmtMin, 50).
--define(BankCardNoLenMin, 15).
--define(BankCardNoLenMax, 21).
 %%------------------------------------------------------
 %% for mcht req
 validate_format_one_field(<<"merchId">>, Value) when is_binary(Value) ->
@@ -87,7 +84,8 @@ validate_string(not_empty, Value) when is_binary(Value) ->
 validate_string(bank_card_no, Value) when is_binary(Value) ->
   ok = validate_string(integer, Value),
   Len = byte_size(Value),
-  true = (?BankCardNoLenMin =< Len) and (?BankCardNoLenMax >= Len),
+  {LenMin, LenMax} = pg_mcht_protocol:limit(bank_card_no_len),
+  true = (LenMin =< Len) and (LenMax >= Len),
   ok;
 validate_string(txn_amt, Value) when is_binary(Value) ->
   ok = validate_string(integer, Value),

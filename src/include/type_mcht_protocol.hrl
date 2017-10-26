@@ -27,6 +27,7 @@
 -type settle_date() :: byte8().
 -type txn_status() :: success | waiting |fail.
 -type bank_card_no() :: byte16_21().
+-type bank_id() :: binary().
 
 -type id_type() :: byte2().
 -type id_no() :: byte15() | byte18().
@@ -55,4 +56,5 @@
   , id_no/0
   , id_name/0
   , mobile/0
+  , bank_id/0
 ]).

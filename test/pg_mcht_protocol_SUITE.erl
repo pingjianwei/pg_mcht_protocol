@@ -21,6 +21,7 @@
 setup() ->
   lager:start(),
   application:start(pg_mcht_enc),
+  application:start(up_config),
   env_init(),
 
   pg_test_utils:setup(mnesia),
@@ -36,9 +37,19 @@ db_init() ->
       [
         [
           {id, 1}
+          , {payment_method, [gw_collect]}
         ],
         [
           {id, 2}
+          , {payment_method, [gw_wap]}
+        ],
+        [
+          {id, 3}
+          , {payment_method, [gw_netbank]}
+        ],
+        [
+          {id, 4}
+          , {payment_method, [gw_netbank_only]}
         ]
 
       ]
@@ -50,27 +61,10 @@ db_init() ->
     }
   ],
 
-  db_init_x(RepoContents),
+  pg_test_utils:db_init(RepoContents),
   ok.
 
 %%---------------------------------------------------------------
-db_init_x(Cfgs) when is_list(Cfgs) ->
-  F =
-    fun(M, ValueList) ->
-      pg_repo:drop(M),
-      pg_repo:init(M),
-      [db_init_one_row(M, VL) || VL <- ValueList]
-    end,
-
-  [F(MRepo, DataList) || {MRepo, DataList} <- Cfgs],
-
-  ok.
-
-db_init_one_row(MRepo, VL) ->
-  Repo = pg_model:new(MRepo, VL),
-%%  ?debugFmt("Repo = ~p", [Repo]),
-  pg_repo:save(Repo).
-
 db_init_test_1() ->
   M = pg_mcht_protocol:repo_module(mchants),
   [Repo] = pg_repo:read(M, 1),
@@ -82,8 +76,11 @@ env_init() ->
   Cfgs = [
     {?APP,
       [
-        {mcht_repo_name, pg_mcht_protocol_t_repo_mchants_pt}
+        {debug, true}
+        , {mcht_repo_name, pg_mcht_protocol_t_repo_mchants_pt}
         , {mcht_txn_log_repo_name, pg_mcht_protocol_t_repo_mcht_txn_log_pt}
+        , {limit_txn_amt_min, 50}
+        , {limit_bank_card_no_len, {16, 21}}
 
       ]
     }
@@ -109,6 +106,8 @@ my_test_() ->
         , fun collect_save_test_1/0
         , fun collect_validate_test_1/0
         , fun collect_verify_test_1/0
+
+        , fun validate_biz_test_1/0
       ]
     }
 
@@ -136,14 +135,14 @@ qs(collect) ->
     , {<<"orderDesc">>, <<"测试交易"/utf8>>}
     , {<<"merchId">>, <<"00001">>}
     , {<<"tranId">>, <<"20171021095817473460847">>}
-    , {<<"bankCardNo">>, <<"9555500216246958">>}
+    , {<<"bankCardNo">>, <<"6216261000000000018">>}
     , {<<"tranDate">>, <<"20171021">>}
     , {<<"tranTime">>, <<"095817">>}
-    , {<<"signature">>, <<"16808B681094E884DC4EDF3882D59AFA4063D1D58867EAC6E52852F1018E2363A93F5790E2E737411716270A9A04B394294A1F91599C9603DA0EC96EE82B796CF483C94BC4D88C85EB7CE3B0EC9C142D7F512C95B428AF16F870C7458A07A270EE7773BAA44414462D7FAEBC430E59FCAB1AEAC587520D15933EDEC262741A9FE8D7F12DFEB8C87F568F3B9E074103E7731D8713275BA004B18C33F54C4ABB9815B63AF3A2585B4268354E52B19D094D33653771D77949E873A683AD9E9282EC75E8D1DF22F845FCCD9B50F2971072A82026A0D270E78B63C55ED065DE025F472E04B9F24D8F31AE0BE9133E42F029CF18C7128F13770B3F7BEC9DCBC329527B">>}
+    , {<<"signature">>, <<"7D2B74AF2BCC3B1C4C1B6FF2328E3C27881FB0497FB0413D4E53801047E1F83CD19CE97B4D9A0C4C7D9BD17B3D9AF4F652536EAA6076E1A1B5D1E7C53A6E3CF1572C8647407BFEF7CD5BBE8ECF210EA495A4335E43A012E4CAF17B6E9FD7813D2E6D44D52B84D823FF8EBD156E10B446E673994DFA1060F1C1D5371DB618439E2FD666BC1E99A49BCC1642A44592292A8942373967E48A51D27C2C5DD8276F679CD30025C3E8ED9F22B004494DFBA2DB0EEA311A5596B6D4B4067CD534A5CFCF61CE1086C6871CE33AF8525E1F2A7B0F8FF33A7D6CF431FB0A309A6441DBF414C7A4F7DF3D1FC2734C40913D566D900B32DA85D01D0583FF0AA69EC326C2E01A">>}
     , {<<"certifType">>, <<"01">>}
-    , {<<"certifId">>, <<"320404197205161013">>}
-    , {<<"certifName">>, <<"徐峰"/utf8>>}
-    , {<<"phoneNo">>, <<"13916043073">>}
+    , {<<"certifId">>, <<"341126197709218366">>}
+    , {<<"certifName">>, <<"全渠道"/utf8>>}
+    , {<<"phoneNo">>, <<"13552535506">>}
     , {<<"trustBackUrl">>, <<"http://localhost:8888/pg/simu_mcht_back_succ_info">>}
   ].
 
@@ -179,7 +178,7 @@ pr_test() ->
   "aN=上海聚孚金融信息服务有限公司,aB=农业银行上海张江集电港支行},front_url=<<\"http://localhost:8888/pg/simu_mcht_front_succ\">>,"
   "back_url=<<\"http://localhost:8888/pg/simu_mcht_back_succ_info\">>,"
   "signature=<<\"A49FA652C9C6320BC1E6EA06D1B6BA244FB541346D4EF36699BCAF14DE53B668A63B502AB5FF4BB304BD703B9B8E517157C503C53BFAD397AEEAB11627CBF160C6ED40063566E7BB45F8BF3C5F8CD4E327CD538094F216574EEE79EF9C23567078088B3834F45CD29D13332181D48109FA8EDC4EFD3911B10CD55F6AF01D5C72BD57D3433A935DB2F90F5601DE3B332784CDB986BD3358225C30DC50A3236656625FCAAF1F2BA4399A348CAE9A3E29FCB9B51D4B74E6AB7C483F8BD556D43831DE3335C3126681124407FF334F36B2B9EF96B92921319DACF46A27254436D0A3E41D60261FC9544E0D93D09C59D8C55D18A914B907AA2AE695F96ABFE11433DE\">>"
-  ",bank_card_no=<<>>,"/utf8>>,
+  ",bank_card_no=<<>>,bank_id=<<>>,"/utf8>>,
 
 %%  lager:start(),
 %%  lager:error("ExpString = ~ts~n", [ExpString]),
@@ -250,7 +249,7 @@ save_test_1() ->
 collect_sign_string_test() ->
   M = pg_mcht_protocol_req_collect,
   P = protocol(collect),
-  ?assertEqual(<<"00001201710212017102109581747346084709581750测试交易http://localhost:8888/pg/simu_mcht_back_succ_info955550021624695801320404197205161013徐峰13916043073"/utf8>>,
+  ?assertEqual(<<"00001201710212017102109581747346084709581750测试交易http://localhost:8888/pg/simu_mcht_back_succ_info621626100000000001801341126197709218366全渠道13552535506"/utf8>>,
     pg_mcht_protocol:sign_string(M, P)),
   ?assertEqual(pk(collect), pg_mcht_protocol:get(M, P, mcht_index_key)),
   ok.
@@ -259,7 +258,7 @@ collect_sign_test_1() ->
   M = pg_mcht_protocol_req_collect,
   P = protocol(collect),
   {_, Sig} = pg_mcht_protocol:sign(M, P),
-  ?assertEqual(<<"16808B681094E884DC4EDF3882D59AFA4063D1D58867EAC6E52852F1018E2363A93F5790E2E737411716270A9A04B394294A1F91599C9603DA0EC96EE82B796CF483C94BC4D88C85EB7CE3B0EC9C142D7F512C95B428AF16F870C7458A07A270EE7773BAA44414462D7FAEBC430E59FCAB1AEAC587520D15933EDEC262741A9FE8D7F12DFEB8C87F568F3B9E074103E7731D8713275BA004B18C33F54C4ABB9815B63AF3A2585B4268354E52B19D094D33653771D77949E873A683AD9E9282EC75E8D1DF22F845FCCD9B50F2971072A82026A0D270E78B63C55ED065DE025F472E04B9F24D8F31AE0BE9133E42F029CF18C7128F13770B3F7BEC9DCBC329527B">>,
+  ?assertEqual(<<"7D2B74AF2BCC3B1C4C1B6FF2328E3C27881FB0497FB0413D4E53801047E1F83CD19CE97B4D9A0C4C7D9BD17B3D9AF4F652536EAA6076E1A1B5D1E7C53A6E3CF1572C8647407BFEF7CD5BBE8ECF210EA495A4335E43A012E4CAF17B6E9FD7813D2E6D44D52B84D823FF8EBD156E10B446E673994DFA1060F1C1D5371DB618439E2FD666BC1E99A49BCC1642A44592292A8942373967E48A51D27C2C5DD8276F679CD30025C3E8ED9F22B004494DFBA2DB0EEA311A5596B6D4B4067CD534A5CFCF61CE1086C6871CE33AF8525E1F2A7B0F8FF33A7D6CF431FB0A309A6441DBF414C7A4F7DF3D1FC2734C40913D566D900B32DA85D01D0583FF0AA69EC326C2E01A">>,
     Sig),
   ok.
 
@@ -278,8 +277,17 @@ collect_save_test_1() ->
 %%  ?debugFmt("RepoSave = ~p", [RepoSave]),
 
   [Repo] = pg_repo:read(MRepo, pk(collect)),
-  ?assertEqual([collect, waiting, 50, <<"320404197205161013">>, <<"徐峰"/utf8>>],
+  ?assertEqual([collect, waiting, 50, <<"341126197709218366">>, <<"全渠道"/utf8>>],
     pg_model:get(MRepo, Repo, [txn_type, txn_status, txn_amt, id_no, id_name])),
+
+  %% biz_test
+  ?assertThrow({validate_fail, _, _}, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, tran_id)),
+  P1 = pg_model:set(M, P, mcht_id, <<"111">>),
+  PK1 = pg_mcht_protocol:get(M, P1, mcht_index_key),
+%%  {ok, [Repo1]} = pg_repo:fetch(MRepo, PK1),
+%%  ?debugFmt("Repo1=~p", [Repo1]),
+
+  ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P1, tran_id)),
   ok.
 
 collect_validate_test_1() ->
@@ -288,3 +296,48 @@ collect_validate_test_1() ->
   ?assertEqual({ok, <<>>, <<>>}, pg_mcht_protocol:validate_format(qs(collect))),
   ok.
 
+%%-----------------------------------------------------------
+%% validate_biz test
+validate_biz_test_1() ->
+  M = pg_mcht_protocol_req_collect,
+  P = protocol(collect),
+
+
+  %%------------------------------------
+  %% mcht_id
+  ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, mcht_id)),
+  ?assertThrow({validate_fail, _, _},
+    pg_mcht_protocol_validate_biz:validate_biz_rule(M,
+      pg_model:set(M, P, mcht_id, 100),
+      mcht_id)),
+
+  %%------------------------------------
+  %% sig
+  ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, sig)),
+  ?assertThrow({validate_fail, _, _},
+    pg_mcht_protocol_validate_biz:validate_biz_rule(M,
+      pg_model:set(M, P, signature, <<"AAAA">>),
+      sig)),
+
+  ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, payment_method)),
+
+  %%------------------------------------
+  %% gw_netbank/gw_wap
+  MPay = ?M_Protocol,
+  PPay = protocol(pay),
+%%  ?debugFmt("PPay = ~p", [PPay]),
+  ?assertThrow({validate_fail, _, _}, pg_mcht_protocol_validate_biz:validate_biz_rule(MPay, PPay, payment_method)),
+  ?assertEqual(ok,
+    pg_mcht_protocol_validate_biz:validate_biz_rule(MPay,
+      pg_model:set(MPay, PPay, [{mcht_id, <<"00002">>}]),
+      payment_method)),
+  ?assertEqual(ok,
+    pg_mcht_protocol_validate_biz:validate_biz_rule(MPay,
+      pg_model:set(MPay, PPay, [{mcht_id, <<"00003">>}]),
+      payment_method)),
+  ?assertThrow({validate_fail, _, _},
+    pg_mcht_protocol_validate_biz:validate_biz_rule(MPay,
+      pg_model:set(MPay, PPay, [{mcht_id, <<"00004">>}]),
+      payment_method)),
+
+  ok.

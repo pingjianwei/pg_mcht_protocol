@@ -10,11 +10,16 @@
       [
         pg_model
         , pg_protocol
+        , pg_mcht_enc
+        , up_config
 
       ]},
     {env, [
-      {mcht_repo_name, repo_mchants_pt}
+      {debug, false}
+      , {mcht_repo_name, repo_mchants_pt}
       , {mcht_txn_log_repo_name, repo_mcht_txn_log_pt}
+      , {limit_txn_amt_min, 50}
+      , {limit_bank_card_no_len, {16, 21}}
     ]},
     {modules, []},
 

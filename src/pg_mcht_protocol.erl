@@ -31,6 +31,7 @@
   , validate_format/1
   , save/2
   , repo_module/1
+  , limit/1
 ]).
 
 -type validate_result() :: ok | fail.
@@ -188,6 +189,14 @@ repo_module(mchants) ->
 repo_module(mcht_txn_log) ->
   {ok, Module} = application:get_env(?APP, mcht_txn_log_repo_name),
   Module.
+
+%%------------------------------------------------------
+limit(txn_amt) ->
+  {ok, TxnAmtMin} = application:get_env(?APP, limit_txn_amt_min),
+  TxnAmtMin;
+limit(bank_card_no_len) ->
+  {ok, LenLimit} = application:get_env(?APP, limit_bank_card_no_len),
+  LenLimit.
 %%====================================================================
 %% Internal functions
 %%====================================================================

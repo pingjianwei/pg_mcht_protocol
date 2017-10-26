@@ -55,6 +55,7 @@
   , back_url
   , signature = <<"9">>
   , bank_card_no = <<>>
+  , bank_id = <<>>
 }).
 
 -type ?TXN() :: #?TXN{}.
@@ -75,6 +76,7 @@ sign_fields() ->
     , txn_seq
     , txn_time
     , txn_amt
+    , bank_id
     , order_desc
     , back_url
     , front_url

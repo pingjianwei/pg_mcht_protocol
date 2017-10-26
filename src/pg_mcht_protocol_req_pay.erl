@@ -45,6 +45,7 @@
   , mcht_back_url
   , signature = <<"9">> :: pg_mcht_protocol:signature()
   , bank_card_no = <<>> :: pg_mcht_protocol:bank_card_no()
+  , bank_id = <<>> :: pg_mcht_protocol:bank_id()
 }).
 
 -type ?P() :: #?P{}.
@@ -60,6 +61,7 @@ sign_fields() ->
     , mcht_txn_seq
     , mcht_txn_time
     , mcht_txn_amt
+    , bank_id
     , mcht_order_desc
     , mcht_back_url
     , mcht_front_url
