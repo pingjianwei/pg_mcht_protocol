@@ -293,7 +293,7 @@ collect_save_test_1() ->
 collect_validate_test_1() ->
   M = pg_mcht_protocol_req_collect,
   P = protocol(collect),
-  ?assertEqual({ok, <<>>, <<>>}, pg_mcht_protocol:validate_format(qs(collect))),
+  ?assertEqual(ok, pg_mcht_protocol:validate_format(qs(collect))),
   ok.
 
 %%-----------------------------------------------------------
@@ -339,5 +339,14 @@ validate_biz_test_1() ->
     pg_mcht_protocol_validate_biz:validate_biz_rule(MPay,
       pg_model:set(MPay, PPay, [{mcht_id, <<"00004">>}]),
       payment_method)),
+
+  %% ------------------------------------------
+  %% txn_amt
+  ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(MPay, PPay, txn_amt)),
+  ?assertThrow({validate_fail, _, _},
+    pg_mcht_protocol_validate_biz:validate_biz_rule(MPay,
+      pg_model:set(MPay, PPay, [{txn_amt, 1}]),
+      txn_amt)),
+
 
   ok.

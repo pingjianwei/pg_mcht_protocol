@@ -29,6 +29,7 @@
   , sign_string/2
   , sign/2
   , validate_format/1
+  , validate_biz/2
   , save/2
   , repo_module/1
   , limit/1
@@ -157,29 +158,46 @@ save(M, Protocol) when is_atom(M), is_tuple(Protocol) ->
   VL :: proplists:proplist(),
   Result :: {validate_result, validate_result(), resp_code(), resp_msg()}.
 
-validate_format(Params) when is_list(Params) ->
-  F = fun({Key, Value}, {ok, _, _} = _AccIn) when is_binary(Key) ->
-    try
-      pg_mcht_protocol_validate_format:validate_format_one_field(Key, Value),
-      {ok, <<>>, <<>>}
-    catch
-      _:_ ->
-        ErrorMsg = <<Key/binary, "=[", Value/binary, "]格式错误"/utf8>>,
-        lager:error("Post vals error = ~ts", [ErrorMsg]),
-        {fail, <<"99">>, ErrorMsg}
-    end;
+%%validate_format(Params) when is_list(Params) ->
+%%  F = fun({Key, Value}, {ok, _, _} = _AccIn) when is_binary(Key) ->
+%%    try
+%%      pg_mcht_protocol_validate_format:validate_format_one_field(Key, Value),
+%%      {ok, <<>>, <<>>}
+%%    catch
+%%      _:_ ->
+%%        ErrorMsg = <<Key/binary, "=[", Value/binary, "]格式错误"/utf8>>,
+%%        lager:error("Post vals error = ~ts", [ErrorMsg]),
+%%        {fail, <<"99">>, ErrorMsg}
+%%    end;
+%%
+%%    (_, {fail, _, _} = AccIn) ->
+%%      %% previous post kv already validate fail, just pass it throuth
+%%      AccIn
+%%      end,
+%%
+%%  {OkOrFail, RespCd, RespMsg} = lists:foldl(F, {ok, <<>>, <<>>}, Params),
+%%  {OkOrFail, RespCd, RespMsg}.
+validate_format(VL) when is_list(VL) ->
+  F =
+    fun({Key, Value}) ->
+      try
+        pg_mcht_protocol_validate_format:validate_format_one_field(Key, Value)
+      catch
+        _:_ ->
+          ErrorMsg = <<Key/binary, "=[", Value/binary, "]格式错误"/utf8>>,
+          lager:error("Post vals error = ~ts", [ErrorMsg]),
+          {validate_format_fail, <<"99">>, ErrorMsg}
+      end
+    end,
 
-    (_, {fail, _, _} = AccIn) ->
-      %% previous post kv already validate fail, just pass it throuth
-      AccIn
-      end,
-
-  {OkOrFail, RespCd, RespMsg} = lists:foldl(F, {ok, <<>>, <<>>}, Params),
-  {OkOrFail, RespCd, RespMsg}.
+  lists:foreach(F, VL),
+  ok.
 
 validate_format_test() ->
   PostVals = pg_mcht_protocol_SUITE:qs(pay),
-  ?assertEqual({ok, <<>>, <<>>}, validate_format(PostVals)),
+  ?assertEqual(ok, validate_format(PostVals)),
+
+  ?assertEqual(ok, validate_format(PostVals ++ [{<<"tranAmt">>, <<"1">>}])),
   ok.
 
 %%------------------------------------------------------
@@ -190,6 +208,12 @@ repo_module(mcht_txn_log) ->
   {ok, Module} = application:get_env(?APP, mcht_txn_log_repo_name),
   Module.
 
+%%------------------------------------------------------
+validate_biz(M, P) when is_atom(M), is_tuple(P) ->
+  BizValidateItems = [mcht_id, sig, payment_method],
+  [pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, Item)
+    || Item <- BizValidateItems],
+  ok.
 %%------------------------------------------------------
 limit(txn_amt) ->
   {ok, TxnAmtMin} = application:get_env(?APP, limit_txn_amt_min),

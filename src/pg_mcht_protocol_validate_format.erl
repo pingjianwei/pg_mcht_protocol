@@ -136,9 +136,10 @@ validate_format_one_test() ->
 
   ?assertEqual(ok, validate_format_one_field(<<"tranAmt">>, <<"100">>)),
   ?assertEqual(ok, validate_format_one_field(<<"tranAmt">>, <<"50">>)),
-%%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranAmt">>, <<"49">>)),
-%%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranAmt">>, <<"0">>)),
-%%  ?assertError({badmatch, _}, validate_format_one_field(mcht, <<"tranAmt">>, <<"-30">>)),
+  ?assertEqual(ok, validate_format_one_field(<<"tranAmt">>, <<"0">>)),
+%%  ?assertError({badmatch, _}, validate_format_one_field(<<"tranAmt">>, <<"49">>)),
+%%  ?assertError({badmatch, _}, validate_format_one_field(<<"tranAmt">>, <<"0">>)),
+%%  ?assertError({badmatch, _}, validate_format_one_field(<<"tranAmt">>, <<"-30">>)),
 
   ?assertThrow({badmatch, _}, validate_format_one_field(<<"orderDesc">>, <<>>)),
   ?assertThrow({badmatch, _}, validate_format_one_field(<<"orderDesc">>, <<"\"\"">>)),

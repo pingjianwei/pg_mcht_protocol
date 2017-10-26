@@ -58,7 +58,15 @@ validate_biz_rule(M, Model, quota) ->
 validate_biz_rule(M, Model, payment_method) ->
   do_validate_txn_type(M, Model);
 validate_biz_rule(M, Model, txn_amt) ->
-  ok.
+  try
+    TxnAmtMin = pg_mcht_protocol:limit(txn_amt),
+    true = (TxnAmtMin =< pg_model:get(M, Model, txn_amt)),
+    ok
+  catch
+    _:X ->
+      xfutils:cond_lager(pg_mcht_protocol, debug, error, "X = ~p", [X]),
+      throw({validate_fail, <<"12">>, <<"交易金额太小"/utf8>>})
+  end.
 
 
 %%====================================================
