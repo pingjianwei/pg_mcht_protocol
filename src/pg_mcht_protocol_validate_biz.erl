@@ -20,17 +20,17 @@ validate_biz_rule(M, Model, mcht_id) ->
   try
 
     MchtId = pg_model:get(M, Model, mcht_id),
-%%    ?debugFmt("Model = ~p,MchtId = ~p", [Model, MchtId]),
-%%    ?debugFmt("to integer = ~p", [binary_to_integer(MchtId)]),
+    ?debugFmt("Model = ~p,MchtId = ~p", [Model, MchtId]),
+    ?debugFmt("to integer = ~p", [binary_to_integer(MchtId)]),
     {ok, [_Mchant]} = pg_repo:fetch(pg_mcht_protocol:repo_module(mchants), MchtId),
     ok
   catch
     _:{badmatch, _} ->
       %% not found from repo
-%%      MchtId1 = pg_model:get(M, Model, mcht_id),
-%%      MRepo = pg_mcht_protocol:repo_module(mchants),
-%%      lager:error("mcht_id [~p] not exist!MRepo = [~p]", [MchtId1, MRepo]),
-%%      {ok, Mchant1} = pg_repo:fetch(MRepo, MchtId1),
+      MchtId1 = pg_model:get(M, Model, mcht_id),
+      MRepo = pg_mcht_protocol:repo_module(mchants),
+      lager:error("mcht_id [~p] not exist!MRepo = [~p]", [MchtId1, MRepo]),
+      {ok, Mchant1} = pg_repo:fetch(MRepo, MchtId1),
       throw({validate_fail, <<"31">>, <<"商户号不存在"/utf8>>})
   end;
 validate_biz_rule(MP, Model, tran_id) ->
