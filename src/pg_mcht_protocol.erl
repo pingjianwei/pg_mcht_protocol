@@ -183,7 +183,10 @@ validate_format(VL) when is_list(VL) ->
       try
         pg_mcht_protocol_validate_format:validate_format_one_field(Key, Value)
       catch
-        _:_ ->
+        _:X ->
+          lager:error("Error =~p,stacktrace=~s",
+            [X, lager:pr_stacktrace(erlang:get_stacktrace())]),
+
           ErrorMsg = <<Key/binary, "=[", Value/binary, "]格式错误"/utf8>>,
           lager:error("Post vals error = ~ts", [ErrorMsg]),
           {validate_format_fail, <<"99">>, ErrorMsg}
