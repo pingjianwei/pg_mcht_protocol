@@ -308,7 +308,7 @@ validate_biz_test_1() ->
   ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, mcht_id)),
   ?assertThrow({validate_fail, _, _},
     pg_mcht_protocol_validate_biz:validate_biz_rule(M,
-      pg_model:set(M, P, mcht_id, 100),
+      pg_model:set(M, P, mcht_id, <<"100">>),
       mcht_id)),
 
   %%------------------------------------
