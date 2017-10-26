@@ -44,7 +44,7 @@ validate_format_one_field(<<"bankCardNo">>, Value) when is_binary(Value) ->
 validate_format_one_field(<<"orderDesc">>, Value) when is_binary(Value) ->
   %% orderDesc could not be omit or empty string
   ok = validate_string(not_empty, Value);
-validate_format_one_field(<<"signature">>, Value) ->
+validate_format_one_field(<<"signature">>, Value) when is_binary(Value) ->
   %% orderDesc could not be omit or empty string
   ok = validate_string(not_empty, Value);
 validate_format_one_field(<<"certifType">>, Value) when is_binary(Value) ->
