@@ -25,6 +25,8 @@ validate_biz_rule(M, Model, mcht_id) ->
   catch
     _:{badmatch, _} ->
       %% not found from repo
+      MchtId1 = pg_model:get(M, Model, mcht_id),
+      lager:error("mcht_id [~p] not exist!", [MchtId1]),
       throw({validate_fail, <<"31">>, <<"商户号不存在"/utf8>>})
   end;
 validate_biz_rule(MP, Model, tran_id) ->
