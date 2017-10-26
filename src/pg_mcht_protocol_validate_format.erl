@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 21. 十月 2017 9:39
 %%%-------------------------------------------------------------------
--module(pg_mcht_protocol_validate).
+-module(pg_mcht_protocol_validate_format).
 -author("simon").
 -include_lib("eunit/include/eunit.hrl").
 

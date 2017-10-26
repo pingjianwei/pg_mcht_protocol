@@ -14,7 +14,6 @@
 -export([]).
 
 -define(M_Protocol, pg_mcht_protocol_t_protocol_mcht_req_pay).
--define(M_Repo, pg_mcht_protocol_t_repo_mcht_txn_log_pt).
 -define(APP, pg_mcht_protocol).
 
 -compile(export_all).
@@ -22,16 +21,76 @@
 setup() ->
   lager:start(),
   application:start(pg_mcht_enc),
+  env_init(),
 
   pg_test_utils:setup(mnesia),
 
-  pg_repo:drop(?M_Repo),
-  pg_repo:init(?M_Repo),
+  db_init(),
 
-
-  application:set_env(?APP, mcht_repo_name, pg_mcht_protocol_t_repo_mcht_txn_log_pt),
   ok.
 
+
+db_init() ->
+  RepoContents = [
+    {pg_mcht_protocol:repo_module(mchants),
+      [
+        [
+          {id, 1}
+        ],
+        [
+          {id, 2}
+        ]
+
+      ]
+    },
+    {pg_mcht_protocol:repo_module(mcht_txn_log),
+      [
+
+      ]
+    }
+  ],
+
+  db_init_x(RepoContents),
+  ok.
+
+%%---------------------------------------------------------------
+db_init_x(Cfgs) when is_list(Cfgs) ->
+  F =
+    fun(M, ValueList) ->
+      pg_repo:drop(M),
+      pg_repo:init(M),
+      [db_init_one_row(M, VL) || VL <- ValueList]
+    end,
+
+  [F(MRepo, DataList) || {MRepo, DataList} <- Cfgs],
+
+  ok.
+
+db_init_one_row(MRepo, VL) ->
+  Repo = pg_model:new(MRepo, VL),
+%%  ?debugFmt("Repo = ~p", [Repo]),
+  pg_repo:save(Repo).
+
+db_init_test_1() ->
+  M = pg_mcht_protocol:repo_module(mchants),
+  [Repo] = pg_repo:read(M, 1),
+%%  ?debugFmt("Repo = ~p", [Repo]),
+  ?assertEqual(1, pg_model:get(M, Repo, id)),
+  ok.
+%%---------------------------------------------------------------
+env_init() ->
+  Cfgs = [
+    {?APP,
+      [
+        {mcht_repo_name, pg_mcht_protocol_t_repo_mchants_pt}
+        , {mcht_txn_log_repo_name, pg_mcht_protocol_t_repo_mcht_txn_log_pt}
+
+      ]
+    }
+  ],
+
+  pg_test_utils:env_init(Cfgs),
+  ok.
 
 my_test_() ->
   {
@@ -41,7 +100,9 @@ my_test_() ->
     {
       inorder,
       [
-        fun verify_test_1/0
+        fun db_init_test_1/0
+
+        , fun verify_test_1/0
         , fun sign_test_1/0
         , fun save_test_1/0
         , fun collect_sign_test_1/0
@@ -168,18 +229,20 @@ sign_test_1() ->
 %%-----------------------------------------------------------
 save_test_1() ->
   P = protocol(pay),
+  MRepo = pg_mcht_protocol:repo_module(mcht_txn_log),
 
   Repo = pg_convert:convert(?M_Protocol, [P, P], save_req),
-  ?assertEqual(pay, pg_model:get(?M_Repo, Repo, txn_type)),
-  ?assertEqual(<<"00001">>, pg_model:get(?M_Repo, Repo, mcht_id)),
-  ?assertEqual(pk(pay), pg_model:get(?M_Repo, Repo, mcht_index_key)),
+%%  ?debugFmt("Repo = ~p", [Repo]),
+  ?assertEqual(pay, pg_model:get(MRepo, Repo, txn_type)),
+  ?assertEqual(<<"00001">>, pg_model:get(MRepo, Repo, mcht_id)),
+  ?assertEqual(pk(pay), pg_model:get(MRepo, Repo, mcht_index_key)),
 
   pg_mcht_protocol:save(?M_Protocol, P),
 
-  [Repo] = pg_repo:read(?M_Repo, pk(pay)),
+  [Repo] = pg_repo:read(MRepo, pk(pay)),
 
   ?assertEqual([pay, waiting, 100],
-    pg_model:get(?M_Repo, Repo, [txn_type, txn_status, txn_amt])),
+    pg_model:get(MRepo, Repo, [txn_type, txn_status, txn_amt])),
   ok.
 
 %%-----------------------------------------------------------
@@ -209,9 +272,10 @@ collect_verify_test_1() ->
 collect_save_test_1() ->
   M = pg_mcht_protocol_req_collect,
   P = protocol(collect),
-  MRepo = pg_mcht_protocol:repo_mcht_module(),
+  MRepo = pg_mcht_protocol:repo_module(mcht_txn_log),
   lager:error("M=~p,P=~p", [M, P]),
-  pg_mcht_protocol:save(M, P),
+  {ok, RepoSave} = pg_mcht_protocol:save(M, P),
+%%  ?debugFmt("RepoSave = ~p", [RepoSave]),
 
   [Repo] = pg_repo:read(MRepo, pk(collect)),
   ?assertEqual([collect, waiting, 50, <<"320404197205161013">>, <<"徐峰"/utf8>>],

@@ -30,7 +30,7 @@
   , sign/2
   , validate_format/1
   , save/2
-  , repo_mcht_module/0
+  , repo_module/1
 ]).
 
 -type validate_result() :: ok | fail.
@@ -159,7 +159,7 @@ save(M, Protocol) when is_atom(M), is_tuple(Protocol) ->
 validate_format(Params) when is_list(Params) ->
   F = fun({Key, Value}, {ok, _, _} = _AccIn) when is_binary(Key) ->
     try
-      pg_mcht_protocol_validate:validate_format_one_field(Key, Value),
+      pg_mcht_protocol_validate_format:validate_format_one_field(Key, Value),
       {ok, <<>>, <<>>}
     catch
       _:_ ->
@@ -182,8 +182,11 @@ validate_format_test() ->
   ok.
 
 %%------------------------------------------------------
-repo_mcht_module() ->
+repo_module(mchants) ->
   {ok, Module} = application:get_env(?APP, mcht_repo_name),
+  Module;
+repo_module(mcht_txn_log) ->
+  {ok, Module} = application:get_env(?APP, mcht_txn_log_repo_name),
   Module.
 %%====================================================================
 %% Internal functions

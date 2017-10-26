@@ -96,7 +96,7 @@ convert_config() ->
     {save_req,
       [
 
-        {to, fun pg_mcht_protocol:repo_mcht_module/0},
+        {to, {fun pg_mcht_protocol:repo_module/1, [mcht_txn_log]}},
         {from,
           [
             {?MODULE,

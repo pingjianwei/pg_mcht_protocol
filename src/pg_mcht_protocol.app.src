@@ -13,7 +13,8 @@
 
       ]},
     {env, [
-      {mcht_repo_name, repo_mcht_txn_log_pt}
+      {mcht_repo_name, repo_mchants_pt}
+      , {mcht_txn_log_repo_name, repo_mcht_txn_log_pt}
     ]},
     {modules, []},
 
