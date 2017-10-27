@@ -189,7 +189,7 @@ validate_format(VL) when is_list(VL) ->
 
           ErrorMsg = <<Key/binary, "=[", Value/binary, "]格式错误"/utf8>>,
           lager:error("Post vals error = ~ts", [ErrorMsg]),
-          {validate_format_fail, <<"99">>, ErrorMsg}
+          throw({validate_format_fail, <<"99">>, ErrorMsg})
       end
     end,
 
@@ -201,6 +201,8 @@ validate_format_test() ->
   ?assertEqual(ok, validate_format(PostVals)),
 
   ?assertEqual(ok, validate_format(PostVals ++ [{<<"tranAmt">>, <<"1">>}])),
+  ?assertThrow({validate_format_fail, <<"99">>, _},
+    validate_format(proplists:delete(<<"merchId">>, PostVals) ++ [{<<"merchId">>, <<"d">>}])),
   ok.
 
 %%------------------------------------------------------

@@ -148,6 +148,10 @@ validate_format_one_test() ->
   ?assertEqual(ok, validate_format_one_field(<<"certifType">>, <<"01">>)),
   ?assertError({badmatch, _}, validate_format_one_field(<<"certifType">>, <<"011">>)),
 
+  ?assertEqual(ok, validate_format_one_field(<<"merchId">>, <<"01">>)),
+  ?assertError({badmatch, _}, validate_format_one_field(<<"merchId">>, <<"d">>)),
+
+
   ok.
 
 
