@@ -206,9 +206,11 @@ validate_format_test() ->
 %%------------------------------------------------------
 repo_module(mchants) ->
   {ok, Module} = application:get_env(?APP, mcht_repo_name),
+  mchants = pg_repo:name(Module),
   Module;
 repo_module(mcht_txn_log) ->
   {ok, Module} = application:get_env(?APP, mcht_txn_log_repo_name),
+  mcht_txn_log = pg_repo:name(Module),
   Module.
 
 %%------------------------------------------------------
