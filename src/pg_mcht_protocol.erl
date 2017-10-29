@@ -33,6 +33,9 @@
   , save/2
   , repo_module/1
   , limit/1
+  , out_fields/1
+  , out_2_in/2
+  , in_2_out/3
 ]).
 
 -type validate_result() :: ok | fail.
@@ -228,6 +231,20 @@ limit(txn_amt) ->
 limit(bank_card_no_len) ->
   {ok, LenLimit} = application:get_env(?APP, limit_bank_card_no_len),
   LenLimit.
+%%------------------------------------------------------
+out_fields(M) when is_atom(M) ->
+  [signature | M:sign_fields()].
+%%------------------------------------------------------
+out_2_in(M, PV) when is_atom(M), is_list(PV) ->
+  pg_protocol:out_2_in(M, PV).
+
+
+%%------------------------------------------------------
+in_2_out(M, Protocol, proplists) when is_atom(M), is_tuple(Protocol) ->
+  pg_model:to(M, Protocol, {proplists, out_fields(M), in_2_out_map()});
+in_2_out(M, Protocol, post) when is_atom(M), is_tuple(Protocol) ->
+  pg_model:to(M, Protocol, {proplists, out_fields(M), in_2_out_map()}).
+
 %%====================================================================
 %% Internal functions
 %%====================================================================
