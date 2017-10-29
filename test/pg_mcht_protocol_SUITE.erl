@@ -74,6 +74,11 @@ db_init_test_1() ->
 %%---------------------------------------------------------------
 env_init() ->
   Cfgs = [
+    {pg_convert,
+      [
+        {debug, true}
+      ]
+    },
     {?APP,
       [
         {debug, true}
@@ -108,6 +113,7 @@ my_test_() ->
         , fun collect_verify_test_1/0
 
         , fun validate_biz_test_1/0
+        , fun req_collect_resp_fail_convert_test_1/0
       ]
     }
 
@@ -348,5 +354,17 @@ validate_biz_test_1() ->
       pg_model:set(MPay, PPay, [{txn_amt, 1}]),
       txn_amt)),
 
+
+  ok.
+%%-----------------------------------------------------------
+req_collect_resp_fail_convert_test_1() ->
+  M = pg_mcht_protocol_req_collect,
+  P = protocol(collect),
+  MResp = pg_mcht_protocol_resp_collect,
+
+  Resp = pg_convert:convert(MResp, P, fail_resp),
+  ExpResp = pg_model:new(MResp, pg_model:to(M, P, proplists)),
+
+  ?assertEqual(ExpResp, Resp),
 
   ok.

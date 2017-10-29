@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 24. Jan 2017 3:57 PM
 %%%-------------------------------------------------------------------
--module(pg_mcht_protocol_req_collect).
+-module(pg_mcht_protocol_resp_collect).
 -compile({parse_trans, exprecs}).
 -author("simon").
 -include_lib("mixer/include/mixer.hrl").
@@ -33,7 +33,6 @@
 -export([
   sign_fields/0
   , options/0
-%%  , to_list/1
 ]).
 
 %%-------------------------------------------------------------------
@@ -42,17 +41,14 @@
 -record(?P, {
   mcht_id = 9999 :: pg_mcht_protocol:mcht_id()
   , txn_date = <<>> :: pg_mcht_protocol:txn_date()
-  , txn_time = <<>> :: pg_mcht_protocol:txn_time()
   , txn_seq = <<"9999">> :: pg_mcht_protocol:txn_seq()
   , txn_amt = 0 :: pg_mcht_protocol:txn_amt()
-  , order_desc = <<>> :: pg_mcht_protocol:order_desc()
-  , back_url :: pg_mcht_protocol:url()
+  , query_id = <<>> :: pg_mcht_protocol:query_id()
+  , quota = 0 :: pg_mcht_protocol:quota()
+  , resp_code = <<>> :: pg_mcht_protocol:resp_code()
+  , resp_msg = <<>> :: pg_mcht_protocol:resp_msg()
   , signature = <<"9">> :: pg_mcht_protocol:signature()
-  , bank_card_no = <<>> :: pg_mcht_protocol:bank_card_no()
-  , id_type = <<"01">> :: pg_mcht_protocol:id_type()
-  , id_no = <<>> :: pg_mcht_protocol:id_type()
-  , id_name = <<>> :: pg_mcht_protocol:id_name()
-  , mobile = <<>> :: pg_mcht_protocol:mobile()
+
   , txn_type = collect
   , txn_status = waiting :: pg_mcht_protocol:txn_status()
 }).
@@ -67,27 +63,22 @@ sign_fields() ->
     mcht_id
     , txn_date
     , txn_seq
-    , txn_time
     , txn_amt
-    , order_desc
-    , back_url
-    , bank_card_no
-    , id_type
-    , id_no
-    , id_name
-    , mobile
+    , query_id
+    , resp_code
+    , resp_msg
 
   ].
 
 options() ->
   #{
-    direction => req
+    direction => resp
   }.
 
 
 convert_config() ->
   [
-    {save_req,
+    {update_resp,
       [
 
         {to, {fun pg_mcht_protocol:repo_module/1, [mcht_txn_log]}},
@@ -95,16 +86,25 @@ convert_config() ->
           [
             {?MODULE,
               [
-                {txn_type, {static, collect}}
-                , {txn_status, {static, waiting}}
+                {txn_status, {fun xfutils:up_resp_code_2_txn_status/1, [resp_code]}}
                 , {mcht_index_key, pg_mcht_protocol, mcht_index_key}
               ]
             },
             {?MODULE, all}
           ]}
       ]
-    }
+    },
+    {fail_resp,
+      [
+        {to, ?MODULE},
+        {from,
+          [
+            {pg_mcht_protocol_req_collect, all}
+          ]
+        }
 
+      ]
+    }
   ].
 
 
