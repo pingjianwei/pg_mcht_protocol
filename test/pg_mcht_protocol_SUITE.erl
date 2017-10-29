@@ -18,6 +18,10 @@
 
 -compile(export_all).
 
+cleanup(_Pid) ->
+  db_init(),
+  ok.
+
 setup() ->
   lager:start(),
   application:start(pg_mcht_enc),
@@ -98,6 +102,7 @@ my_test_() ->
   {
     setup
     , fun setup/0
+    , fun cleanup/1
     ,
     {
       inorder,
@@ -113,6 +118,8 @@ my_test_() ->
         , fun collect_verify_test_1/0
 
         , fun validate_biz_test_1/0
+        , fun validate_biz_all_test_1/0
+
         , fun req_collect_resp_fail_convert_test_1/0
       ]
     }
@@ -305,6 +312,8 @@ collect_validate_test_1() ->
 %%-----------------------------------------------------------
 %% validate_biz test
 validate_biz_test_1() ->
+  db_init(),
+
   M = pg_mcht_protocol_req_collect,
   P = protocol(collect),
 
@@ -318,6 +327,13 @@ validate_biz_test_1() ->
       mcht_id)),
 
   %%------------------------------------
+  %% tran_id
+  PK = pk(collect),
+  MRepo = pg_mcht_protocol:repo_module(mcht_txn_log),
+  {ok, Repo} = pg_repo:fetch(MRepo, PK),
+  ?assertEqual([], Repo),
+  ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, tran_id)),
+  %%------------------------------------
   %% sig
   ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, sig)),
   ?assertThrow({validate_fail, _, _},
@@ -325,6 +341,8 @@ validate_biz_test_1() ->
       pg_model:set(M, P, signature, <<"AAAA">>),
       sig)),
 
+  %%------------------------------------
+  %% payment_method
   ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, payment_method)),
 
   %%------------------------------------
@@ -354,7 +372,14 @@ validate_biz_test_1() ->
       pg_model:set(MPay, PPay, [{txn_amt, 1}]),
       txn_amt)),
 
+  ok.
 
+validate_biz_all_test_1() ->
+  db_init(),
+
+  M = pg_mcht_protocol_req_collect,
+  P = protocol(collect),
+  ?assertEqual(ok, pg_mcht_protocol:validate_biz(M, P)),
   ok.
 %%-----------------------------------------------------------
 req_collect_resp_fail_convert_test_1() ->

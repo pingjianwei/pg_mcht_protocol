@@ -217,7 +217,7 @@ repo_module(mcht_txn_log) ->
 
 %%------------------------------------------------------
 validate_biz(M, P) when is_atom(M), is_tuple(P) ->
-  BizValidateItems = [mcht_id, sig, payment_method],
+  BizValidateItems = [mcht_id, tran_id, txn_amt, quota, payment_method, sig],
   [pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, Item)
     || Item <- BizValidateItems],
   ok.

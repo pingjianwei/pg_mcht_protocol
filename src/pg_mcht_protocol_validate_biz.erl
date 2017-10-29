@@ -20,17 +20,12 @@ validate_biz_rule(M, Model, mcht_id) ->
   try
 
     MchtId = pg_model:get(M, Model, mcht_id),
-%%    ?debugFmt("Model = ~p,MchtId = ~p", [Model, MchtId]),
-%%    ?debugFmt("to integer = ~p", [binary_to_integer(MchtId)]),
     {ok, [_Mchant]} = pg_repo:fetch(pg_mcht_protocol:repo_module(mchants), MchtId),
     ok
   catch
     _:{badmatch, _} ->
       %% not found from repo
-%%      MchtId1 = pg_model:get(M, Model, mcht_id),
-%%      MRepo = pg_mcht_protocol:repo_module(mchants),
-%%      lager:error("mcht_id [~p] not exist!MRepo = [~p]", [MchtId1, MRepo]),
-%%      {ok, Mchant1} = pg_repo:fetch(MRepo, MchtId1),
+      lager:error("validate fail,mcht_id no exist, Model = ~p", [Model]),
       throw({validate_fail, <<"31">>, <<"商户号不存在"/utf8>>})
   end;
 validate_biz_rule(MP, Model, tran_id) ->
@@ -42,13 +37,7 @@ validate_biz_rule(MP, Model, tran_id) ->
 
   catch
     _:{badmatch, X} ->
-%%      ?debugFmt("X=~p", [X]),
-%%      PK1 = pg_mcht_protocol:get(MP, Model, mcht_index_key),
-%%      ?debugFmt("Dup PK = ~p", [PK1]),
-%%      MRepo1 = pg_mcht_protocol:repo_module(mcht_txn_log),
-%%      {ok, [Repo]} = pg_repo:fetch(MRepo1, PK1),
-%%      ?debugFmt("OrigTxnLog = ~p", [Repo]),
-      xfutils:cond_lager(pg_mcht_protocol, debug, error, "X = ~p", [X]),
+      lager:error("validate fail,tran_id duplicated,Model = ~p", [Model]),
       throw({validate_fail, <<"12">>, <<"商户交易流水号重复"/utf8>>})
   end;
 validate_biz_rule(M, Model, sig) ->
@@ -56,10 +45,10 @@ validate_biz_rule(M, Model, sig) ->
     ok = pg_mcht_protocol:verify(M, Model)
   catch
     _:X ->
-      lager:error("verify mcht sig error . Reason = ~p", [X]),
+      lager:error("verify mcht sig error . Reason = ~p,Model = ~p", [X, Model]),
       throw({validate_fail, <<"11">>, <<"签名验证失败"/utf8>>})
   end;
-validate_biz_rule(M, Model, quota) ->
+validate_biz_rule(_M, _Model, quota) ->
   ok;
 validate_biz_rule(M, Model, payment_method) ->
   do_validate_txn_type(M, Model);
@@ -70,8 +59,8 @@ validate_biz_rule(M, Model, txn_amt) ->
     ok
   catch
     _:X ->
-      xfutils:cond_lager(pg_mcht_protocol, debug, error, "X = ~p", [X]),
-      throw({validate_fail, <<"12">>, <<"交易金额太小"/utf8>>})
+      lager:error("validate fail, txn amt too small,X = ~p,Model=~p", [X, Model]),
+      throw({validate_fail, <<"33">>, <<"交易金额太小"/utf8>>})
   end.
 
 
@@ -90,6 +79,7 @@ do_validate_txn_type(pg_mcht_protocol_req_collect = M, Model) ->
     ok
   catch
     _:{badmatch, _} ->
+      lager:error("validate payment method fail, not gw_collect, Model = ~p", [Model]),
       throw({validate_fail, <<"32">>, <<"该商户未配置代收业务"/utf8>>})
   end;
 do_validate_txn_type(M, Model)
@@ -114,7 +104,7 @@ do_validate_txn_type(M, Model)
         [PaymentMethod, BankId, BankCardNo]),
       throw({validate_fail, <<"32">>, <<"网银直连银行不允许指定银行卡号"/utf8>>});
     _:X ->
-      lager:error("Verify payment method error, Reason = ~p", [X]),
+      lager:error("Verify payment method error, Reason = ~p,Model = ~p", [X, Model]),
       throw({validate_fail, <<"32">>, <<"支付方式检查错误">>})
   end.
 
