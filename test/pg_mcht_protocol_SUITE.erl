@@ -404,6 +404,7 @@ resp_collect_convert_test_1() ->
     , {up_respCode, <<"88">>}
     , {up_respMsg, <<"Die for hard">>}
     , {txn_status, fail}
+    , {up_orderId, <<"20170101">>}
   ]),
 
   VL = pg_convert:convert(pg_mcht_protocol_resp_collect, RepoUp),
@@ -412,6 +413,7 @@ resp_collect_convert_test_1() ->
     , {resp_code, <<"88">>}
     , {resp_msg, <<"Die for hard">>}
     , {txn_status, fail}
-  ], [{Key, proplists:get_value(Key, VL)} || Key <- [mcht_index_key, resp_code, resp_msg, txn_status]]),
+    , {query_id, <<"20170101">>}
+  ], [{Key, proplists:get_value(Key, VL)} || Key <- [mcht_index_key, resp_code, resp_msg, txn_status, query_id]]),
 
   ok.

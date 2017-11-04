@@ -87,6 +87,7 @@ convert_config() ->
                 {txn_status, txn_status}
                 , {resp_code, up_respCode}
                 , {resp_msg, up_respMsg}
+                , {query_id, up_orderId}
                 , {mcht_index_key, mcht_index_key}
               ]
             }
