@@ -61,7 +61,6 @@ sign_fields() ->
     mcht_id
     , txn_date
     , txn_seq
-    , txn_time
     , txn_amt
     , query_id
     , resp_code
