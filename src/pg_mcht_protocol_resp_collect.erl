@@ -94,6 +94,17 @@ convert_config() ->
         }
       ]
     },
+    {normal_resp,         %% copy all from mcht_txn_log
+      [
+        {to, ?MODULE},
+        {from,
+          [
+            {{pg_mcht_protocol, repo_module, [mcht_txn_log]}, all   %% copy from mcht_txn_log repo name
+            }
+          ]
+        }
+      ]
+    },
     {fail_resp,
       [
         {to, ?MODULE},
