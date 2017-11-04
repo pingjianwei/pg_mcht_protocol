@@ -249,7 +249,7 @@ out_2_in(M, PV) when is_atom(M), is_list(PV) ->
 in_2_out(M, Protocol, proplists) when is_atom(M), is_tuple(Protocol) ->
   pg_model:to(M, Protocol, {proplists, out_fields(M), in_2_out_map()});
 in_2_out(M, Protocol, post) when is_atom(M), is_tuple(Protocol) ->
-  pg_model:to(M, Protocol, {proplists, out_fields(M), in_2_out_map()}).
+  pg_model:to(M, Protocol, {poststring, out_fields(M), in_2_out_map()}).
 
 %%====================================================================
 %% Internal functions
