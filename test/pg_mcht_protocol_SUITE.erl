@@ -88,6 +88,7 @@ env_init() ->
         {debug, true}
         , {mcht_repo_name, pg_mcht_protocol_t_repo_mchants_pt}
         , {mcht_txn_log_repo_name, pg_mcht_protocol_t_repo_mcht_txn_log_pt}
+        , {up_txn_log_repo_name, pg_mcht_protocol_t_repo_up_txn_log_pt}
         , {limit_txn_amt_min, 50}
         , {limit_bank_card_no_len, {16, 21}}
 
@@ -121,6 +122,7 @@ my_test_() ->
         , fun validate_biz_all_test_1/0
 
         , fun req_collect_resp_fail_convert_test_1/0
+        , fun resp_collect_convert_test_1/0
       ]
     }
 
@@ -391,5 +393,25 @@ req_collect_resp_fail_convert_test_1() ->
   ExpResp = pg_model:new(MResp, pg_model:to(M, P, proplists)),
 
   ?assertEqual(ExpResp, Resp),
+
+  ok.
+%%-----------------------------------------------------------
+resp_collect_convert_test_1() ->
+  MRepoUp = pg_mcht_protocol:repo_module(up_txn_log),
+
+  RepoUp = pg_model:new(MRepoUp, [
+    {mcht_index_key, {a, b, c}}
+    , {up_respCode, <<"88">>}
+    , {up_respMsg, <<"Die for hard">>}
+    , {txn_status, fail}
+  ]),
+
+  VL = pg_convert:convert(pg_mcht_protocol_resp_collect, RepoUp),
+  ?assertEqual([
+    {mcht_index_key, {a, b, c}}
+    , {resp_code, <<"88">>}
+    , {resp_msg, <<"Die for hard">>}
+    , {txn_status, fail}
+  ], [{Key, proplists:get_value(Key, VL)} || Key <- [mcht_index_key, resp_code, resp_msg, txn_status]]),
 
   ok.

@@ -36,6 +36,7 @@
 
 
 -type query_id() :: byte23_up().
+-type quota() :: integer().
 
 -export_type([
   mcht_id/0
@@ -57,4 +58,5 @@
   , id_name/0
   , mobile/0
   , bank_id/0
+  , quota/0
 ]).

@@ -33,6 +33,7 @@
 -export([
   sign_fields/0
   , options/0
+%%  , to_list/1
 ]).
 
 %%-------------------------------------------------------------------
@@ -43,14 +44,11 @@
   , txn_date = <<>> :: pg_mcht_protocol:txn_date()
   , txn_seq = <<"9999">> :: pg_mcht_protocol:txn_seq()
   , txn_amt = 0 :: pg_mcht_protocol:txn_amt()
-  , query_id = <<>> :: pg_mcht_protocol:query_id()
-  , quota = 0 :: pg_mcht_protocol:quota()
-  , resp_code = <<>> :: pg_mcht_protocol:resp_code()
-  , resp_msg = <<>> :: pg_mcht_protocol:resp_msg()
+  , query_id :: pg_mcht_protocol:query_id()
+  , resp_code :: pg_mcht_protocol:resp_code()
+  , resp_msg :: pg_mcht_protocol:resp_msg()
+  , quota :: pg_mcht_protocol:quota()
   , signature = <<"9">> :: pg_mcht_protocol:signature()
-
-  , txn_type = collect
-  , txn_status = waiting :: pg_mcht_protocol:txn_status()
 }).
 
 -type ?P() :: #?P{}.
@@ -63,6 +61,7 @@ sign_fields() ->
     mcht_id
     , txn_date
     , txn_seq
+    , txn_time
     , txn_amt
     , query_id
     , resp_code
@@ -78,20 +77,22 @@ options() ->
 
 convert_config() ->
   [
-    {update_resp,
+    {default,       %% convert from up_txn_log
       [
 
-        {to, {fun pg_mcht_protocol:repo_module/1, [mcht_txn_log]}},
+        {to, proplists},
         {from,
           [
-            {?MODULE,
+            {{pg_mcht_protocol, repo_module, [up_txn_log]},     %% dynamic up_txn_log repo name
               [
-                {txn_status, {fun xfutils:up_resp_code_2_txn_status/1, [resp_code]}}
-                , {mcht_index_key, pg_mcht_protocol, mcht_index_key}
+                {txn_status, txn_status}
+                , {resp_code, up_respCode}
+                , {resp_msg, up_respMsg}
+                , {mcht_index_key, mcht_index_key}
               ]
-            },
-            {?MODULE, all}
-          ]}
+            }
+          ]
+        }
       ]
     },
     {fail_resp,
@@ -100,11 +101,9 @@ convert_config() ->
         {from,
           [
             {pg_mcht_protocol_req_collect, all}
-          ]
-        }
+          ]}
+      ]}
 
-      ]
-    }
   ].
 
 

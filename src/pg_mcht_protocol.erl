@@ -216,7 +216,13 @@ repo_module(mchants) ->
 repo_module(mcht_txn_log) ->
   {ok, Module} = application:get_env(?APP, mcht_txn_log_repo_name),
   mcht_txn_log = pg_model:name(Module),
+  Module;
+repo_module(up_txn_log) ->
+  {ok, Module} = application:get_env(?APP, up_txn_log_repo_name),
+  up_txn_log = pg_model:name(Module),
   Module.
+
+%%------------------------------------------------------
 
 %%------------------------------------------------------
 validate_biz(M, P) when is_atom(M), is_tuple(P) ->
