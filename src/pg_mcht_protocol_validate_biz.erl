@@ -75,8 +75,14 @@ get_mcht_payment_method(M, Model) ->
 
 do_validate_txn_type(pg_mcht_protocol_req_collect = M, Model) ->
   try
-    gw_collect = get_mcht_payment_method(M, Model),
-    ok
+    case get_mcht_payment_method(M, Model) of
+      gw_collect ->
+        ok;
+      gw_collect1 ->
+        ok;
+      _ ->
+        throw({badmatch, true})
+    end
   catch
     _:{badmatch, _} ->
       lager:error("validate payment method fail, not gw_collect, Model = ~p", [Model]),
