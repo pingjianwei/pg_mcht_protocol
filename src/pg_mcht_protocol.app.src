@@ -6,14 +6,6 @@
       [kernel,
         stdlib
       ]},
-    {included_applications,
-      [
-        pg_model
-        , pg_protocol
-        , pg_mcht_enc
-        , up_config
-
-      ]},
     {env, [
       {debug, false}
       , {mcht_repo_name, repo_mchants_pt}
