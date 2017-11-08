@@ -139,7 +139,16 @@ sign(M, P) when is_atom(M), is_tuple(P) ->
 
   Direction = direction(M),
 
-  Sig = pg_mcht_enc:sign_hex(MchtId, Direction, SignString),
+  MMchants = pg_mcht_protocol:repo_module(mchants),
+
+  SignMethod = pg_repo:fetch_by(MMchants, binary_to_integer(MchtId), sign_method),
+
+  Sig = case SignMethod of
+          rsa_hex ->
+            pg_mcht_enc:sign_hex(MchtId, Direction, SignString);
+          rsa_base64 ->
+            pg_mcht_enc:sign(MchtId, Direction, SignString)
+        end,
   lager:debug("SignString = ~ts,Sig = ~ts", [SignString, Sig]),
   {SignString, Sig}.
 
