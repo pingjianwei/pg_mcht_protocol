@@ -271,12 +271,15 @@ do_verify_msg(M, P, SignFields) when is_atom(M), is_tuple(P), is_list(SignFields
   MchtId = pg_model:get(M, P, mcht_id),
   SignMethod = pg_repo:fetch_by(pg_mcht_protocol:repo_module(mchants), binary_to_integer(MchtId), sign_method),
 
+
   VerifyResult = case SignMethod of
                    rsa_hex ->
                      pg_mcht_enc:verify_hex(MchtId, Direction, SignString, Signature);
                    rsa_base64 ->
                      pg_mcht_enc:verify(MchtId, Direction, SignString, Signature)
                  end,
+  lager:debug("VerifyResult = ~p,SignMethod = ~p,SignString = ~p,Direction = ~p,Sig = ~p",
+    [VerifyResult, SignMethod, SignString, Direction, Signature]),
 
   case VerifyResult of
     true -> ok;
