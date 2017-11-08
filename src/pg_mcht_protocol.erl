@@ -268,8 +268,17 @@ do_verify_msg(M, P, SignFields) when is_atom(M), is_tuple(P), is_list(SignFields
   Signature = pg_model:get(M, P, signature),
 
   Direction = direction(M),
+  MchtId = pg_model:get(M, P, mcht_id),
+  SignMethod = pg_repo:fetch_by(pg_mcht_protocol:repo_module(mchants), binary_to_integer(MchtId), sign_method),
 
-  case pg_mcht_enc:verify_hex(pg_model:get(M, P, mcht_id), Direction, SignString, Signature) of
+  VerifyResult = case SignMethod of
+                   rsa_hex ->
+                     pg_mcht_enc:verify_hex(MchtId, Direction, SignString, Signature);
+                   rsa_base64 ->
+                     pg_mcht_enc:verify(MchtId, Direction, SignString, Signature)
+                 end,
+
+  case VerifyResult of
     true -> ok;
     false ->
       % verify fail

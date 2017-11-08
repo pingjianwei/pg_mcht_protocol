@@ -288,6 +288,12 @@ collect_verify_test_1() ->
   M = pg_mcht_protocol_req_collect,
   P = protocol(collect),
   ?assertEqual(ok, pg_mcht_protocol:verify(M, P)),
+
+  P64 = pg_model:set(M, P,
+    [{mcht_id, <<"00002">>},
+      {signature, <<"2dk5VdDMFoVBnfxj0rSP+Xf9ygt4RdRU/+l2llQaHMmVpkocOOAuwuhc5D7S7hKf58eL6boY0aAmGLtlZuLBbFUlj1hfJFD1rS1m0puLYsv5qXMiwq9DdQ9F87CXhsqmT167kNsWQr6FWSD1k5CebsIsVMp/0ZaxR69W7b8Nx/jV1CpgndZI5qcVxPx3WgtddfbxnS8FYcUjU29lumyVEThucfoTsluuz4iHxERUxpVkQq+Qr7g4772KmVNLc1J4n9zx4QiwevlznUBfq7dpDu2958EqbWtibO+/rTVALcZdVj/yFwNgiEgqfDWCQlB7Vy+bCn/H+yLZYqmDpEf0og==">>}]
+  ),
+  ?assertEqual(ok, pg_mcht_protocol:verify(M, P64)),
   ok.
 
 collect_save_test_1() ->
