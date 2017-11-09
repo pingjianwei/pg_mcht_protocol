@@ -38,6 +38,11 @@
 -type query_id() :: byte23_up().
 -type quota() :: integer().
 
+-type txn_count() :: non_neg_integer().
+-type req_reserved() :: binary().
+-type batch_no() :: integer().
+-type file_content() :: binary().
+
 -export_type([
   mcht_id/0
   , txn_date/0
@@ -59,4 +64,8 @@
   , mobile/0
   , bank_id/0
   , quota/0
+  , txn_count/0
+  , req_reserved/0
+  , batch_no/0
+  , file_content/0
 ]).

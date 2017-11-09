@@ -49,6 +49,7 @@ pr_formatter(Field)
   (Field =:= order_desc)
 %%  or (Field =:= signature)
     or (Field =:= id_name)
+    or (Field =:= fileContent)
   ->
   string;
 pr_formatter(_) ->
@@ -83,6 +84,10 @@ in_2_out_map() ->
     , id_name => <<"certifName">>
     , mobile => <<"phoneNo">>
     , bank_id => <<"bankId">>
+    , file_content => <<"fileContent">>
+    , batch_no => {<<"batchNo">>, integer}
+    , txn_count => {<<"tranCount">>, integer}
+    , req_reserved => <<"reqReserved">>
 
   }.
 %%------------------------------------------------------
@@ -278,7 +283,7 @@ do_verify_msg(M, P, SignFields) when is_atom(M), is_tuple(P), is_list(SignFields
                    rsa_base64 ->
                      pg_mcht_enc:verify(MchtId, Direction, SignString, Signature)
                  end,
-  lager:debug("VerifyResult = ~p,SignMethod = ~p,SignString = ~p,Direction = ~p,Sig = ~p",
+  lager:debug("VerifyResult = ~p,SignMethod = ~p,SignString = ~ts,Direction = ~p,Sig = ~p",
     [VerifyResult, SignMethod, SignString, Direction, Signature]),
 
   case VerifyResult of

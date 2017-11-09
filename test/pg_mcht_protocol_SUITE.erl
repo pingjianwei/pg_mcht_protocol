@@ -125,6 +125,8 @@ my_test_() ->
 
         , fun req_collect_resp_fail_convert_test_1/0
         , fun resp_collect_convert_test_1/0
+
+        , fun batch_collect_test_1/0
       ]
     }
 
@@ -161,11 +163,28 @@ qs(collect) ->
     , {<<"certifName">>, <<"全渠道"/utf8>>}
     , {<<"phoneNo">>, <<"13552535506">>}
     , {<<"trustBackUrl">>, <<"http://localhost:8888/pg/simu_mcht_back_succ_info">>}
+  ];
+qs(batch_collect) ->
+  [
+    {<<"tranAmt">>, <<"130000">>}
+    , {<<"orderDesc">>, <<"测试交易"/utf8>>}
+    , {<<"merchId">>, <<"00001">>}
+    , {<<"tranId">>, <<"20171021095817473460847">>}
+    , {<<"tranDate">>, <<"20171021">>}
+    , {<<"tranTime">>, <<"095817">>}
+    , {<<"signature">>, <<"7D2B74AF2BCC3B1C4C1B6FF2328E3C27881FB0497FB0413D4E53801047E1F83CD19CE97B4D9A0C4C7D9BD17B3D9AF4F652536EAA6076E1A1B5D1E7C53A6E3CF1572C8647407BFEF7CD5BBE8ECF210EA495A4335E43A012E4CAF17B6E9FD7813D2E6D44D52B84D823FF8EBD156E10B446E673994DFA1060F1C1D5371DB618439E2FD666BC1E99A49BCC1642A44592292A8942373967E48A51D27C2C5DD8276F679CD30025C3E8ED9F22B004494DFBA2DB0EEA311A5596B6D4B4067CD534A5CFCF61CE1086C6871CE33AF8525E1F2A7B0F8FF33A7D6CF431FB0A309A6441DBF414C7A4F7DF3D1FC2734C40913D566D900B32DA85D01D0583FF0AA69EC326C2E01A">>}
+    , {<<"trustBackUrl">>, <<"http://localhost:8888/pg/simu_mcht_back_succ_info">>}
+    , {<<"tranCount">>, <<"3">>}
+    , {<<"fileContent">>, <<"aaa">>}
+    , {<<"batchNo">>, <<"0009">>}
+    , {<<"reqReserved">>, <<"qqq">>}
   ].
 
 pk(pay) ->
   {<<"00001">>, <<"20170124">>, <<"20170124140404395762577">>};
 pk(collect) ->
+  {<<"00001">>, <<"20171021">>, <<"20171021095817473460847">>};
+pk(batch_collect) ->
   {<<"00001">>, <<"20171021">>, <<"20171021095817473460847">>}.
 
 protocol(pay) ->
@@ -173,7 +192,9 @@ protocol(pay) ->
   P = pg_protocol:out_2_in(M, qs(pay)),
   P;
 protocol(collect) ->
-  pg_protocol:out_2_in(pg_mcht_protocol_req_collect, qs(collect)).
+  pg_protocol:out_2_in(pg_mcht_protocol_req_collect, qs(collect));
+protocol(batch_collect) ->
+  pg_protocol:out_2_in(pg_mcht_protocol_req_batch_collect, qs(batch_collect)).
 
 get_test() ->
 
@@ -428,5 +449,18 @@ resp_collect_convert_test_1() ->
     , {txn_status, fail}
     , {query_id, <<"20170101">>}
   ], [{Key, proplists:get_value(Key, VL)} || Key <- [mcht_index_key, resp_code, resp_msg, txn_status, query_id]]),
+
+  ok.
+
+%%-----------------------------------------------------------
+batch_collect_test_1() ->
+  M = pg_mcht_protocol_req_batch_collect,
+  P = protocol(batch_collect),
+
+  {ok, RepoNew} = pg_mcht_protocol:save(M, P),
+  ?assertEqual([pk(batch_collect), 130000, 3, 9, <<"aaa">>],
+    pg_model:get(pg_mcht_protocol:repo_module(mcht_txn_log),
+      RepoNew,
+      [mcht_index_key, txn_amt, txn_count, batch_no, file_content])),
 
   ok.

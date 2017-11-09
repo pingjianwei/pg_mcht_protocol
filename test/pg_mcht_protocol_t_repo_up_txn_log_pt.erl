@@ -69,6 +69,12 @@
   , up_idNo
   , up_idName
   , up_mobile
+
+  %% batch collect
+  , up_batchNo
+  , up_fileContent
+  , up_totalQty
+  , up_totalAmt
 }).
 
 -type ?TBL() :: #?TBL{}.
