@@ -133,9 +133,10 @@ sign_value(Value) when is_binary(Value) ->
 
 
 %%------------------------------------------------------------
--spec sign(M, P) -> Sig when
+-spec sign(M, P) -> {SignString, Sig} when
   M :: atom(),
   P :: pg_model:pg_model(),
+  SignString :: binary(),
   Sig :: binary() | iolist().
 
 sign(M, P) when is_atom(M), is_tuple(P) ->

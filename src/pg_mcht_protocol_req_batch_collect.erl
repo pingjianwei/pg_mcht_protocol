@@ -53,6 +53,7 @@
   , signature = <<"9">> :: pg_mcht_protocol:signature()
   , txn_type = batch_collect
   , txn_status = waiting :: pg_mcht_protocol:txn_status()
+  , req_reserved = <<>> :: pg_mcht_protocol:req_reserved()
 }).
 
 -type ?P() :: #?P{}.

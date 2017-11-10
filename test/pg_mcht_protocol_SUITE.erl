@@ -463,4 +463,9 @@ batch_collect_test_1() ->
       RepoNew,
       [mcht_index_key, txn_amt, txn_count, batch_no, file_content])),
 
+  {SignString, Sig} = pg_mcht_protocol:sign(M, P),
+  ?debugFmt("SignString = ~ts,Sig=~ts", [SignString, Sig]),
+%%  ?assertEqual(<<>>, SignString),
+%%  ?assertEqual(<<>>, Sig),
+
   ok.
