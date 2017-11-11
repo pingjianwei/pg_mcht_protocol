@@ -73,7 +73,9 @@ get_mcht_payment_method(M, Model) ->
   [PaymentMethod] = pg_repo:fetch_by(MRepoMchants, MchtId, payment_method),
   PaymentMethod.
 
-do_validate_txn_type(pg_mcht_protocol_req_collect = M, Model) ->
+do_validate_txn_type(M, Model)
+  when (M =:= pg_mcht_protocol_req_collect)
+  orelse (M =:= pg_mcht_protocol_req_batch_collect) ->
   try
     case get_mcht_payment_method(M, Model) of
       gw_collect ->
