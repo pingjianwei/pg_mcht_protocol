@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 24. Jan 2017 3:57 PM
 %%%-------------------------------------------------------------------
--module(pg_mcht_protocol_resp_collect).
+-module(pg_mcht_protocol_info_collect).
 -compile({parse_trans, exprecs}).
 -author("simon").
 -include_lib("mixer/include/mixer.hrl").
@@ -45,6 +45,7 @@
   , txn_seq = <<"9999">> :: pg_mcht_protocol:txn_seq()
   , txn_amt = 0 :: pg_mcht_protocol:txn_amt()
   , query_id :: pg_mcht_protocol:query_id()
+  , settle_date :: pg_mcht_protocol:settle_date()
   , resp_code :: pg_mcht_protocol:resp_code()
   , resp_msg :: pg_mcht_protocol:resp_msg()
   , quota :: pg_mcht_protocol:quota()
@@ -63,6 +64,8 @@ sign_fields() ->
     , txn_seq
     , txn_amt
     , query_id
+    , settle_date
+    , quota
     , resp_code
     , resp_msg
 
@@ -88,6 +91,7 @@ convert_config() ->
                 , {resp_code, up_respCode}
                 , {resp_msg, up_respMsg}
                 , {query_id, up_orderId}
+                , {settle_date, up_settleDate}
                 , {mcht_index_key, mcht_index_key}
               ]
             }

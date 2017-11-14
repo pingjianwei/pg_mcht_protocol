@@ -125,6 +125,7 @@ my_test_() ->
 
         , fun req_collect_resp_fail_convert_test_1/0
         , fun resp_collect_convert_test_1/0
+        , fun info_collect_convert_test_1/0
 
         , fun batch_collect_test_1/0
       ]
@@ -452,6 +453,30 @@ resp_collect_convert_test_1() ->
 
   ok.
 
+%% -------------------------------------------------------------------
+info_collect_convert_test_1() ->
+  MRepoUp = pg_mcht_protocol:repo_module(up_txn_log),
+
+  RepoUp = pg_model:new(MRepoUp, [
+    {mcht_index_key, {a, b, c}}
+    , {up_respCode, <<"88">>}
+    , {up_respMsg, <<"Die for hard">>}
+    , {txn_status, fail}
+    , {up_orderId, <<"20170101">>}
+    , {up_settleDate, <<"20101010">>}
+  ]),
+
+  VL = pg_convert:convert(pg_mcht_protocol_info_collect, RepoUp),
+  ?assertEqual([
+    {mcht_index_key, {a, b, c}}
+    , {resp_code, <<"88">>}
+    , {resp_msg, <<"Die for hard">>}
+    , {txn_status, fail}
+    , {query_id, <<"20170101">>}
+    , {settle_date, <<"20101010">>}
+  ], [{Key, proplists:get_value(Key, VL)}
+    || Key <- [mcht_index_key, resp_code, resp_msg, txn_status, query_id, settle_date]]),
+  ok.
 %%-----------------------------------------------------------
 batch_collect_test_1() ->
   M = pg_mcht_protocol_req_batch_collect,
