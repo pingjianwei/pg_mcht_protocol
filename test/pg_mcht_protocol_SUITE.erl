@@ -332,6 +332,15 @@ collect_save_test_1() ->
 
   %% biz_test
   ?assertThrow({validate_fail, _, _}, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, tran_id)),
+  ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, txn_amt)),
+
+  pg_repo:update(pg_mcht_protocol:repo_module(mchants), [{id, 1}, {quota, [{txn, 100000}, {daily, -1}, {month, -1}]}]),
+  ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, txn_amt)),
+
+  ?assertThrow({validate_fail, <<"33">>, _},
+    pg_mcht_protocol_validate_biz:validate_biz_rule(M, pg_model:set(M, P, txn_amt, 200000), txn_amt)),
+
+
   P1 = pg_model:set(M, P, mcht_id, <<"111">>),
   PK1 = pg_mcht_protocol:get(M, P1, mcht_index_key),
 %%  {ok, [Repo1]} = pg_repo:fetch(MRepo, PK1),

@@ -55,12 +55,16 @@ validate_biz_rule(M, Model, payment_method) ->
 validate_biz_rule(M, Model, txn_amt) ->
   try
     TxnAmtMin = pg_mcht_protocol:limit(txn_amt),
-    true = (TxnAmtMin =< pg_model:get(M, Model, txn_amt)),
+    TxnAmt = pg_model:get(M, Model, txn_amt),
+    true = (TxnAmtMin =< TxnAmt),
+    MchtId = pg_model:get(M, Model, mcht_id),
+    [{txn, TxnAmtMax} | _] = pg_repo:fetch_by(pg_mcht_protocol:repo_module(mchants), MchtId, quota),
+    true = (TxnAmtMax =:= -1) orelse (TxnAmt =< TxnAmtMax),
     ok
   catch
     _:X ->
       lager:error("validate fail, txn amt too small,X = ~p,Model=~p", [X, Model]),
-      throw({validate_fail, <<"33">>, <<"交易金额太小"/utf8>>})
+      throw({validate_fail, <<"33">>, <<"交易金额超限"/utf8>>})
   end.
 
 
