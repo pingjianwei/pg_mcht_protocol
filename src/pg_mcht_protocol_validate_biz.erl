@@ -63,7 +63,7 @@ validate_biz_rule(M, Model, txn_amt) ->
     ok
   catch
     _:X ->
-      lager:error("validate fail, txn amt too small,X = ~p,Model=~p", [X, Model]),
+      lager:error("validate fail, txn amt too small/large,X = ~p,Model=~p", [X, Model]),
       throw({validate_fail, <<"33">>, <<"交易金额超限"/utf8>>})
   end.
 
