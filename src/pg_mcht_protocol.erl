@@ -50,6 +50,7 @@ pr_formatter(Field)
 %%  or (Field =:= signature)
     or (Field =:= id_name)
     or (Field =:= fileContent)
+    or (Field =:= resp_msg)
   ->
   string;
 pr_formatter(_) ->
