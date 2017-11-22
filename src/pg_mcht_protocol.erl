@@ -242,8 +242,25 @@ repo_module(up_txn_log) ->
 %%------------------------------------------------------
 
 %%------------------------------------------------------
-validate_biz(M, P) when is_atom(M), is_tuple(P) ->
+validate_biz(M, P)
+  when is_tuple(P),
+  (
+      (M =:= pg_mcht_protocol_req_collect)
+        orelse (M =:= pg_mcht_protocol_req_pay)
+  )
+  ->
   BizValidateItems = [mcht_id, tran_id, txn_amt, quota, payment_method, sig],
+  do_validate_biz(M, P, BizValidateItems);
+validate_biz(M, P)
+  when is_tuple(P),
+  (
+      (M =:= pg_mcht_protocol_req_query)
+  )
+  ->
+  BizValidateItems = [mcht_id, sig],
+  do_validate_biz(M, P, BizValidateItems).
+
+do_validate_biz(M, P, BizValidateItems) when is_atom(M), is_tuple(P), is_list(BizValidateItems) ->
   [pg_mcht_protocol_validate_biz:validate_biz_rule(M, P, Item)
     || Item <- BizValidateItems],
   ok.
