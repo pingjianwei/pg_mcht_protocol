@@ -103,7 +103,9 @@ get(M, Model, mcht_index_key) when is_atom(M), is_tuple(Model) ->
     , pg_model:get(M, Model, txn_seq)
   };
 get(M, Model, Field) when is_atom(Field), is_atom(M), is_tuple(Model) ->
-  pg_model:get(M, Model, Field).
+  pg_model:get(M, Model, Field);
+get(M, Model, FieldList) when is_list(FieldList), is_atom(M), is_tuple(Model) ->
+  [get(M, Model, Field) || Field <- FieldList].
 %%------------------------------------------------------
 -spec verify(M, Protocol) -> PassOrNot when
   M :: atom(),

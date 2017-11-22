@@ -83,19 +83,21 @@ convert_config() ->
         {to, ?MODULE},
         {from,
           [
-            {
-              {resp_code, {static, <<"00">>}}
-              , {resp_msg, {static, <<"success">>}}
-              , {orig_resp_code, resp_code}
-              , {orig_resp_msg, resp_msg}
-              , {mcht_id, mcht_id}
-              , {txn_date, txn_date}
-              , {txn_seq, txn_seq}
-              , {txn_time, txn_time}
-              , {query_id, query_id}
-              , {txn_amt, txn_amt}
-              , {settle_date, settle_date}
-              , {quota, {static, 0}}
+            {{pg_mcht_protocol, repo_module, [mcht_txn_log]},
+              [
+                {resp_code, {static, <<"00">>}}
+                , {resp_msg, {static, <<"success">>}}
+                , {orig_resp_code, resp_code}
+                , {orig_resp_msg, resp_msg}
+                , {mcht_id, mcht_id}
+                , {txn_date, txn_date}
+                , {txn_seq, txn_seq}
+                , {txn_time, txn_time}
+                , {query_id, query_id}
+                , {txn_amt, txn_amt}
+                , {settle_date, settle_date}
+                , {quota, {static, 0}}
+              ]
 
             }
           ]

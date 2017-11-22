@@ -363,8 +363,11 @@ collect_save_test_1() ->
   ?debugFmt("PQuery = ~ts", [pg_model:pr(MQuery, PQuery)]),
   ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(MQuery, PQuery, orig_txn)),
 
-  ?assertThrow({validate_fail, <<"35">>,_}, pg_mcht_protocol_validate_biz:validate_biz_rule(MQuery,
+  ?assertThrow({validate_fail, <<"35">>, _}, pg_mcht_protocol_validate_biz:validate_biz_rule(MQuery,
     pg_model:set(MQuery, PQuery, txn_date, <<"20170101">>), orig_txn)),
+
+  PRespQuery = pg_convert:convert(pg_mcht_protocol_resp_query, Repo, normal_resp),
+  ?assertEqual([pk(collect)], pg_mcht_protocol:get(pg_mcht_protocol_resp_query, PRespQuery, [mcht_index_key])),
 
 
   ok.
