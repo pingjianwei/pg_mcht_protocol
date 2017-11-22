@@ -70,5 +70,3 @@ options() ->
     direction => notify
   }.
 
-validate() ->
-  true.

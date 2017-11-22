@@ -69,13 +69,11 @@ options() ->
     direction => resp
   }.
 
-validate() ->
-  true.
 
 %%---------------------------------
 save(M, Protocol) when is_atom(M), is_record(Protocol, ?TXN) ->
   VL = pg_model:get_proplist(M, Protocol, [query_id, settle_date, resp_code, resp_msg])
-    ++ [{txn_status, xftuils:up_resp_code_2_txn_status(pg_model:get(M, Protocol, resp_code))}],
+    ++ [{txn_status, xfutils:up_resp_code_2_txn_status(pg_model:get(M, Protocol, resp_code))}],
 
   PK = pg_mcht_protocol:get(M, Protocol, mcht_index_key),
   pg_repo:update_pk(repo_mcht_txn_log_pt, PK, VL).

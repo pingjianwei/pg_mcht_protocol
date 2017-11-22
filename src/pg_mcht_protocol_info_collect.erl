@@ -20,9 +20,6 @@
   pr_formatter/1
   , in_2_out_map/0
 ]}]).
--export([
-  validate/0
-]).
 
 %% callbacks of pg_convert
 -export([
@@ -33,7 +30,6 @@
 -export([
   sign_fields/0
   , options/0
-%%  , to_list/1
 ]).
 
 %%-------------------------------------------------------------------
@@ -124,5 +120,3 @@ convert_config() ->
   ].
 
 
-validate() ->
-  ok.

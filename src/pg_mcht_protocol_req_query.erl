@@ -14,7 +14,6 @@
 -behaviour(pg_protocol).
 -behaviour(pg_mcht_protocol).
 
--compile(export_all).
 %% API
 %% callbacks of mcht_protocol
 -mixin([{pg_mcht_protocol, [
@@ -26,26 +25,24 @@
 -export([
   sign_fields/0
   , options/0
+  , convert_config/0
 ]).
 %% callbacks of pg_protocol
 %%-------------------------------------------------------------------
--define(TXN, ?MODULE).
+-define(P, ?MODULE).
 
--record(?TXN, {
+-record(?P, {
   mcht_id = 9999
   , mcht_txn_date = <<>>
   , mcht_txn_time = <<>>
   , mcht_txn_seq = <<"9999">>
-  , orig_mcht_txn_date = <<>>
-  , orig_mcht_txn_seq = <<>>
-  , orig_query_id = <<>>
   , signature
 
 }).
 
--type ?TXN() :: #?TXN{}.
--export_type([?TXN/0]).
--export_records([?TXN]).
+-type ?P() :: #?P{}.
+-export_type([?P/0]).
+-export_records([?P]).
 
 
 sign_fields() ->
@@ -54,9 +51,6 @@ sign_fields() ->
     , mcht_txn_date
     , mcht_txn_seq
     , mcht_txn_time
-    , orig_mcht_txn_date
-    , orig_mcht_txn_seq
-    , orig_query_id
 
   ].
 
@@ -66,10 +60,8 @@ options() ->
     direction => req
   }.
 
-validate() ->
-  true.
+convert_config() ->
+  [
 
+  ].
 %%---------------------------------
-save(M, Protocol) when is_atom(M), is_record(Protocol, ?TXN) ->
-  %% no need to save query txn
-  ok.

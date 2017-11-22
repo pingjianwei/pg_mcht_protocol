@@ -76,5 +76,3 @@ options() ->
     direction => resp
   }.
 
-validate() ->
-  true.

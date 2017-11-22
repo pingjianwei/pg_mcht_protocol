@@ -7,7 +7,7 @@
 %% callbacks
 -callback sign_fields() -> [atom()].
 -callback options() -> map().
--callback validate() -> boolean().
+%%-callback validate() -> boolean().
 %%-callback to_list(Protocol :: pg_model:pg_model()) -> proplists:proplist().
 
 %% API exports
@@ -51,6 +51,7 @@ pr_formatter(Field)
     or (Field =:= id_name)
     or (Field =:= fileContent)
     or (Field =:= resp_msg)
+    or (Field =:= orig_resp_msg)
   ->
   string;
 pr_formatter(_) ->

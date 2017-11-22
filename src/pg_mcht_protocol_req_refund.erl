@@ -69,8 +69,6 @@ options() ->
     direction => req
   }.
 
-validate() ->
-  true.
 
 %%---------------------------------
 save(M, Protocol) when is_atom(M), is_record(Protocol, ?TXN) ->

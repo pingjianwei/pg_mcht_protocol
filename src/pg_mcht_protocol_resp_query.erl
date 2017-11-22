@@ -37,8 +37,6 @@
   , mcht_txn_time = <<>>
   , mcht_txn_seq = <<"9999">>
   , query_id = <<>>
-  , orig_mcht_txn_date = <<>>
-  , orig_mcht_txn_seq = <<>>
   , mcht_txn_amt = 0
   , settle_date = <<>>
   , orig_resp_code = <<>>
@@ -63,8 +61,6 @@ sign_fields() ->
     , mcht_txn_time
     , query_id
     , mcht_txn_amt
-    , orig_mcht_txn_date
-    , orig_mcht_txn_seq
     , settle_date
     , orig_resp_code
     , orig_resp_msg
@@ -80,5 +76,7 @@ options() ->
     direction => resp
   }.
 
-validate() ->
-  true.
+convert_config() ->
+  [
+
+  ].
