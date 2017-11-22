@@ -84,8 +84,8 @@ convert_config() ->
         {from,
           [
             {
-              {resp_code, <<"00">>}
-              , {resp_msg, <<"success">>}
+              {resp_code, {static, <<"00">>}}
+              , {resp_msg, {static, <<"success">>}}
               , {orig_resp_code, resp_code}
               , {orig_resp_msg, resp_msg}
               , {mcht_id, mcht_id}
@@ -95,7 +95,7 @@ convert_config() ->
               , {query_id, query_id}
               , {txn_amt, txn_amt}
               , {settle_date, settle_date}
-              , {quota, 0}
+              , {quota, {static, 0}}
 
             }
           ]
