@@ -23,7 +23,7 @@ cleanup(_Pid) ->
   ok.
 
 setup() ->
-  lager:start(),
+  pg_test_utils:lager_init(),
   application:start(pg_mcht_enc),
   application:start(up_config),
   env_init(),
@@ -74,7 +74,6 @@ db_init() ->
 db_init_test_1() ->
   M = pg_mcht_protocol:repo_module(mchants),
   [Repo] = pg_repo:read(M, 1),
-%%  ?debugFmt("Repo = ~p", [Repo]),
   ?assertEqual(1, pg_model:get(M, Repo, id)),
   ok.
 %%---------------------------------------------------------------
@@ -179,11 +178,20 @@ qs(batch_collect) ->
     , {<<"fileContent">>, <<"aaa">>}
     , {<<"batchNo">>, <<"0009">>}
     , {<<"reqReserved">>, <<"qqq">>}
+  ];
+qs(query_collect) ->
+  [
+    {<<"merchId">>, <<"00001">>}
+    , {<<"tranId">>, <<"20171021095817473460847">>}
+    , {<<"tranDate">>, <<"20171021">>}
+    , {<<"tranTime">>, <<"095817">>}
   ].
 
 pk(pay) ->
   {<<"00001">>, <<"20170124">>, <<"20170124140404395762577">>};
 pk(collect) ->
+  {<<"00001">>, <<"20171021">>, <<"20171021095817473460847">>};
+pk(query_collect) ->
   {<<"00001">>, <<"20171021">>, <<"20171021095817473460847">>};
 pk(batch_collect) ->
   {<<"00001">>, <<"20171021">>, <<"20171021095817473460847">>}.
@@ -194,6 +202,8 @@ protocol(pay) ->
   P;
 protocol(collect) ->
   pg_protocol:out_2_in(pg_mcht_protocol_req_collect, qs(collect));
+protocol(query_collect) ->
+  pg_protocol:out_2_in(pg_mcht_protocol_req_query, qs(query_collect));
 protocol(batch_collect) ->
   pg_protocol:out_2_in(pg_mcht_protocol_req_batch_collect, qs(batch_collect)).
 
@@ -271,7 +281,6 @@ save_test_1() ->
   MRepo = pg_mcht_protocol:repo_module(mcht_txn_log),
 
   Repo = pg_convert:convert(?M_Protocol, [P, P], save_req),
-%%  ?debugFmt("Repo = ~p", [Repo]),
   ?assertEqual(pay, pg_model:get(MRepo, Repo, txn_type)),
   ?assertEqual(<<"00001">>, pg_model:get(MRepo, Repo, mcht_id)),
   ?assertEqual(pk(pay), pg_model:get(MRepo, Repo, mcht_index_key)),
@@ -324,7 +333,6 @@ collect_save_test_1() ->
   MRepo = pg_mcht_protocol:repo_module(mcht_txn_log),
   lager:error("M=~p,P=~p", [M, P]),
   {ok, RepoSave} = pg_mcht_protocol:save(M, P),
-%%  ?debugFmt("RepoSave = ~p", [RepoSave]),
 
   [Repo] = pg_repo:read(MRepo, pk(collect)),
   ?assertEqual([collect, waiting, 50, <<"341126197709218366">>, <<"全渠道"/utf8>>],
@@ -347,6 +355,15 @@ collect_save_test_1() ->
 %%  ?debugFmt("Repo1=~p", [Repo1]),
 
   ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(M, P1, tran_id)),
+
+  %% query validate test
+  MQuery = pg_mcht_protocol_req_query,
+  PQuery = protocol(query_collect),
+  lager:debug("PQuery = ~ts", [pg_model:pr(MQuery, PQuery)]),
+  ?debugFmt("PQuery = ~ts", [pg_model:pr(MQuery, PQuery)]),
+  ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(MQuery, PQuery, orig_txn)),
+
+
   ok.
 
 collect_validate_test_1() ->
@@ -498,8 +515,6 @@ batch_collect_test_1() ->
       [mcht_index_key, txn_amt, txn_count, batch_no, file_content])),
 
   {SignString, Sig} = pg_mcht_protocol:sign(M, P),
-  ?debugFmt("SignString = ~ts,Sig=~ts", [SignString, Sig]),
-%%  ?assertEqual(<<>>, SignString),
-%%  ?assertEqual(<<>>, Sig),
+  lager:debug("SignString = ~ts,Sig=~ts", [SignString, Sig]),
 
   ok.

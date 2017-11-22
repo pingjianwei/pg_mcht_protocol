@@ -7,10 +7,11 @@
 %%% Created : 19. 十月 2017 13:57
 %%%-------------------------------------------------------------------
 -module(pg_mcht_protocol_req_query).
+-compile({parse_trans, exprecs}).
 -author("jiarj").
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("mixer/include/mixer.hrl").
--behaviour(pg_model).
+-behaviour(pg_convert).
 -behaviour(pg_protocol).
 -behaviour(pg_mcht_protocol).
 
@@ -32,11 +33,11 @@
 -define(P, ?MODULE).
 
 -record(?P, {
-  mcht_id = 9999
-  , mcht_txn_date = <<>>
-  , mcht_txn_time = <<>>
-  , mcht_txn_seq = <<"9999">>
-  , signature
+  mcht_id = 9999 :: pg_mcht_protocol:mcht_id()
+  , txn_date = <<>> :: pg_mcht_protocol:txn_date()
+  , txn_time = <<>> :: pg_mcht_protocol:txn_time()
+  , txn_seq = <<"9999">> :: pg_mcht_protocol:txn_seq()
+  , signature :: pg_mcht_protocol:signature()
 
 }).
 
@@ -48,9 +49,9 @@
 sign_fields() ->
   [
     mcht_id
-    , mcht_txn_date
-    , mcht_txn_seq
-    , mcht_txn_time
+    , txn_date
+    , txn_seq
+    , txn_time
 
   ].
 

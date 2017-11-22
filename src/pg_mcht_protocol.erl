@@ -257,7 +257,7 @@ validate_biz(M, P)
       (M =:= pg_mcht_protocol_req_query)
   )
   ->
-  BizValidateItems = [mcht_id, sig],
+  BizValidateItems = [mcht_id, orig_txn, sig],
   do_validate_biz(M, P, BizValidateItems).
 
 do_validate_biz(M, P, BizValidateItems) when is_atom(M), is_tuple(P), is_list(BizValidateItems) ->

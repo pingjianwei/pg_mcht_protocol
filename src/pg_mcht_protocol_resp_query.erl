@@ -10,11 +10,10 @@
 -author("jiarj").
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("mixer/include/mixer.hrl").
--behaviour(pg_model).
+-behaviour(pg_convert).
 -behaviour(pg_protocol).
 -behaviour(pg_mcht_protocol).
 
--compile(export_all).
 %% API
 %% callbacks of mcht_protocol
 -mixin([{pg_mcht_protocol, [
@@ -33,11 +32,11 @@
 
 -record(?TXN, {
   mcht_id = 9999
-  , mcht_txn_date = <<>>
-  , mcht_txn_time = <<>>
-  , mcht_txn_seq = <<"9999">>
+  , txn_date = <<>>
+  , txn_time = <<>>
+  , txn_seq = <<"9999">>
   , query_id = <<>>
-  , mcht_txn_amt = 0
+  , txn_amt = 0
   , settle_date = <<>>
   , orig_resp_code = <<>>
   , orig_resp_msg = <<>>
@@ -56,11 +55,11 @@
 sign_fields() ->
   [
     mcht_id
-    , mcht_txn_date
-    , mcht_txn_seq
-    , mcht_txn_time
+    , txn_date
+    , txn_seq
+    , txn_time
     , query_id
-    , mcht_txn_amt
+    , txn_amt
     , settle_date
     , orig_resp_code
     , orig_resp_msg

@@ -16,6 +16,18 @@
 ]).
 
 
+validate_biz_rule(M, Model, orig_txn) when is_atom(M), is_tuple(Model) ->
+  OrigMchtIndexKey = pg_mcht_protocol:get(M, Model, mcht_index_key),
+  MRepoMcht = pg_mcht_protocol:repo_module(mcht_txn_log),
+  {ok, OrigMchtTxn} = pg_repo:fetch(MRepoMcht, OrigMchtIndexKey),
+  case OrigMchtTxn of
+    [] ->
+      %% not found
+      lager:error("Mcht original txn not found! MchtIndex = ~p", [OrigMchtIndexKey]),
+      throw({validate_fail, <<"35">>, <<"交易流水号查无原商户交易"/utf8>>});
+    _ ->
+      ok
+  end;
 validate_biz_rule(M, Model, mcht_id) ->
   try
 
