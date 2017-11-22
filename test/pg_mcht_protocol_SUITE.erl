@@ -363,6 +363,9 @@ collect_save_test_1() ->
   ?debugFmt("PQuery = ~ts", [pg_model:pr(MQuery, PQuery)]),
   ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(MQuery, PQuery, orig_txn)),
 
+  ?assertThrow({validate_fail, <<"35">>,_}, pg_mcht_protocol_validate_biz:validate_biz_rule(MQuery,
+    pg_model:set(MQuery, PQuery, txn_date, <<"20170101">>), orig_txn)),
+
 
   ok.
 
