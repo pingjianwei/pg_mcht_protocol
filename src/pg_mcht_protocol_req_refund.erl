@@ -65,6 +65,7 @@ sign_fields() ->
 
 options() ->
   #{
+    channel_type => mcht,
     direction => req
   }.
 
