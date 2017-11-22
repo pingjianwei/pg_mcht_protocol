@@ -247,6 +247,7 @@ validate_biz(M, P)
   (
       (M =:= pg_mcht_protocol_req_collect)
         orelse (M =:= pg_mcht_protocol_req_pay)
+        orelse (M =:= pg_mcht_protocol_req_batch_collect)
   )
   ->
   BizValidateItems = [mcht_id, tran_id, txn_amt, quota, payment_method, sig],
