@@ -41,7 +41,7 @@
   , settle_date = <<>>
   , orig_resp_code = <<>>
   , orig_resp_msg = <<>>
-  , quota = 0
+  , limit = 0
   , resp_code
   , resp_msg
   , signature
@@ -64,7 +64,7 @@ sign_fields() ->
     , settle_date
     , orig_resp_code
     , orig_resp_msg
-    , quota
+    , limit
     , resp_code
     , resp_msg
 
@@ -96,7 +96,7 @@ convert_config() ->
                 , {query_id, query_id}
                 , {txn_amt, txn_amt}
                 , {settle_date, settle_date}
-                , {quota, {static, 0}}
+                , {limit, {static, 0}}
               ]
 
             }

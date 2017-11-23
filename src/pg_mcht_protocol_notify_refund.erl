@@ -44,7 +44,7 @@
   , mcht_back_url = <<>>
   , settle_date = <<>>
   , query_id = <<>>
-  , quota = 0
+  , limit = 0
 }).
 
 -type ?TXN() :: #?TXN{}.
@@ -59,7 +59,7 @@ sign_fields() ->
     , mcht_txn_seq
     , query_id
     , settle_date
-    , quota
+    , limit
     , resp_code
     , resp_msg
   ].

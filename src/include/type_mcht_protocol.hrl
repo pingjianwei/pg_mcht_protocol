@@ -36,7 +36,7 @@
 
 
 -type query_id() :: byte23_up().
--type quota() :: integer().
+-type limit() :: integer().
 
 -type txn_count() :: non_neg_integer().
 -type req_reserved() :: binary().
@@ -63,7 +63,7 @@
   , id_name/0
   , mobile/0
   , bank_id/0
-  , quota/0
+  , limit/0
   , txn_count/0
   , req_reserved/0
   , batch_no/0

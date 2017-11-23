@@ -37,7 +37,7 @@
   , mcht_txn_seq = <<"9999">>
   , query_id
   , settle_date
-  , quota = 0
+  , limit = 0
   , resp_code
   , resp_msg
   , mcht_front_url
@@ -57,7 +57,7 @@ sign_fields() ->
     , mcht_txn_seq
     , query_id
     , settle_date
-    , quota
+    , limit
     , resp_code
     , resp_msg
 

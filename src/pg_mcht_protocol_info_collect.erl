@@ -44,7 +44,7 @@
   , settle_date :: pg_mcht_protocol:settle_date()
   , resp_code :: pg_mcht_protocol:resp_code()
   , resp_msg :: pg_mcht_protocol:resp_msg()
-  , quota :: pg_mcht_protocol:quota()
+  , limit :: pg_mcht_protocol:limit()
   , signature = <<"9">> :: pg_mcht_protocol:signature()
 }).
 
@@ -61,7 +61,7 @@ sign_fields() ->
     , txn_amt
     , query_id
     , settle_date
-    , quota
+    , limit
     , resp_code
     , resp_msg
 

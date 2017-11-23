@@ -80,7 +80,7 @@ in_2_out_map() ->
     , settle_date => <<"settleDate">>
     , resp_code => <<"respCode">>
     , resp_msg => <<"respMsg">>
-    , quota => {<<"quota">>, integer}
+    , limit => {<<"limit">>, integer}
     , id_type => <<"certifType">>
     , id_no => <<"certifId">>
     , id_name => <<"certifName">>

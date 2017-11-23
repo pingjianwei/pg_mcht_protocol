@@ -44,7 +44,7 @@
   , query_id :: pg_mcht_protocol:query_id()
   , resp_code :: pg_mcht_protocol:resp_code()
   , resp_msg :: pg_mcht_protocol:resp_msg()
-  , quota :: pg_mcht_protocol:quota()
+  , limit :: pg_mcht_protocol:limit()
   , signature = <<"9">> :: pg_mcht_protocol:signature()
 }).
 
