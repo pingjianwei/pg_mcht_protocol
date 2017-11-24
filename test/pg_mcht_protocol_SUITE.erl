@@ -26,6 +26,7 @@ setup() ->
   pg_test_utils:lager_init(),
   application:start(pg_mcht_enc),
   application:start(up_config),
+  application:start(pg_quota),
   env_init(),
 
   pg_test_utils:setup(mnesia),
@@ -43,6 +44,7 @@ db_init() ->
           {id, 1}
           , {payment_method, [gw_collect]}
           , {sign_method, rsa_hex}
+          , {quota, [{txn, 10000}, {daily, 20000}, {monthly, 30000}]}
         ],
         [
           {id, 2}
@@ -64,6 +66,11 @@ db_init() ->
       [
 
       ]
+    },
+    {pg_quota:repo_module(mcht_txn_acc),
+      [
+
+      ]
     }
   ],
 
@@ -82,6 +89,13 @@ env_init() ->
     {pg_convert,
       [
         {debug, true}
+      ]
+    },
+    {pg_quota,
+      [
+        {mcht_repo_name, pg_mcht_protocol_t_repo_mchants_pt}
+        , {mcht_txn_acc_repo_name, pg_mcht_protocol_t_repo_mcht_txn_acc_pt}
+
       ]
     },
     {?APP,
@@ -440,6 +454,18 @@ validate_biz_test_1() ->
     pg_mcht_protocol_validate_biz:validate_biz_rule(MPay,
       pg_model:set(MPay, PPay, [{txn_amt, 1}]),
       txn_amt)),
+
+  %%------------------------------
+  %% quota
+  ?assertEqual(ok, pg_mcht_protocol_validate_biz:validate_biz_rule(MPay, PPay, quota)),
+  ?assertEqual(ok,
+    pg_mcht_protocol_validate_biz:validate_biz_rule(MPay,
+      pg_model:set(MPay, PPay, [{txn_amt, 100}]),
+      quota)),
+  ?assertThrow({validate_fail, _, _},
+    pg_mcht_protocol_validate_biz:validate_biz_rule(MPay,
+      pg_model:set(MPay, PPay, [{txn_amt, 10001}]),
+      quota)),
 
   ok.
 

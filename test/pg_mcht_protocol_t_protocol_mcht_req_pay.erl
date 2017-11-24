@@ -88,7 +88,7 @@ sign_fields() ->
 options() ->
   #{
     direction => req
-    , type=>pay
+    , txn_type=>pay
     , save_2_repo => true
   }.
 

@@ -67,6 +67,7 @@ sign_fields() ->
 options() ->
   #{
     channel_type => mcht,
+    txn_type => refund,
     direction => notify
   }.
 

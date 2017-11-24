@@ -11,6 +11,7 @@
       , {mcht_repo_name, repo_mchants_pt}
       , {mcht_txn_log_repo_name, repo_mcht_txn_log_pt}
       , {up_txn_log_repo_name, repo_up_txn_log_pt}
+      , {mcht_txn_acc_repo_name, repo_mcht_txn_acc_pt}
       , {limit_txn_amt_min, 50}
       , {limit_bank_card_no_len, {16, 21}}
     ]},

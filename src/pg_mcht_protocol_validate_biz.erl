@@ -60,8 +60,17 @@ validate_biz_rule(M, Model, sig) ->
       lager:error("verify mcht sig error . Reason = ~p,Model = ~p", [X, Model]),
       throw({validate_fail, <<"11">>, <<"签名验证失败"/utf8>>})
   end;
-validate_biz_rule(_M, _Model, quota) ->
-  ok;
+validate_biz_rule(M, Model, quota) ->
+  try
+    pass = pg_quota:check(pg_model:get(M, Model, mcht_id),
+      pg_mcht_protocol:option(M, txn_type),
+      pg_model:get(M, Model, txn_amt)),
+    ok
+  catch
+    _:{badmatch, X} ->
+      lager:error("quota check failed, Model = ~p", [Model]),
+      throw({validate_fail, <<"99">>, <<"交易金额超限（单笔/当日/当月），请联系上游渠道处理"/utf8>>})
+  end;
 validate_biz_rule(M, Model, payment_method) ->
   do_validate_txn_type(M, Model);
 validate_biz_rule(M, Model, txn_amt) ->

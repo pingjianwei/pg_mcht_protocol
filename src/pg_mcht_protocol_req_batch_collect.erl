@@ -76,6 +76,7 @@ sign_fields() ->
 options() ->
   #{
     channel_type => mcht,
+    txn_type => batch_collect,
     direction => req
   }.
 

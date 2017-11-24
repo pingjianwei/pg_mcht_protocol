@@ -36,6 +36,7 @@
   , out_fields/1
   , out_2_in/2
   , in_2_out/3
+  , option/2
 ]).
 
 -type validate_result() :: ok | fail.
@@ -57,6 +58,9 @@ pr_formatter(Field)
 pr_formatter(_) ->
   default.
 
+%%------------------------------------------------------
+option(M, Key) when is_atom(M), is_atom(Key) ->
+  maps:get(Key, M:options()).
 %%------------------------------------------------------
 
 in_2_out_map() ->
@@ -231,6 +235,10 @@ validate_format_test() ->
 repo_module(mchants) ->
   {ok, Module} = application:get_env(?APP, mcht_repo_name),
   mchants = pg_model:name(Module),
+  Module;
+repo_module(mcht_txn_acc) ->
+  {ok, Module} = application:get_env(?APP, mcht_txn_acc_repo_name),
+  mcht_txn_acc = pg_model:name(Module),
   Module;
 repo_module(mcht_txn_log) ->
   {ok, Module} = application:get_env(?APP, mcht_txn_log_repo_name),
